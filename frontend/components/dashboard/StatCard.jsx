@@ -22,9 +22,9 @@ export default function StatCard({ label, value, trend }) {
       : value;
 
   return (
-    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 space-y-4 font-['DM_Sans',sans-serif]">
+    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold tracking-wider text-[#8A93B5] uppercase font-['Space_Grotesk',sans-serif]">
+        <span className="text-xs font-bold tracking-wider text-[#8A93B5] uppercase">
           {label}
         </span>
         <div className="flex items-center gap-1 bg-[#0B1029] p-1 rounded-xl border border-white/10 text-[11px] font-semibold text-[#8A93B5]">
@@ -44,7 +44,7 @@ export default function StatCard({ label, value, trend }) {
       </div>
 
       <div className="flex items-baseline justify-between pt-1">
-        <div className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-['Space_Grotesk',sans-serif]">
+        <div className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
           {formattedValue || "$0.00"}
         </div>
 

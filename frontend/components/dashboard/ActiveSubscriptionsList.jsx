@@ -16,9 +16,9 @@ export default function ActiveSubscriptionsList({ subscriptions = [] }) {
   const displayItems = Array.isArray(subscriptions) ? subscriptions : [];
 
   return (
-    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-between space-y-4 text-white font-['DM_Sans',sans-serif]">
+    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-between space-y-4 text-white">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-bold text-[#8A93B5] uppercase tracking-wider font-['Space_Grotesk',sans-serif]">
+        <h2 className="text-xs font-bold text-[#8A93B5] uppercase tracking-wider">
           Active Subscriptions
         </h2>
         <Link
@@ -39,7 +39,7 @@ export default function ActiveSubscriptionsList({ subscriptions = [] }) {
           </p>
           <Link
             href="/subscriptions"
-            className="text-xs font-bold bg-[#0A84FF] hover:bg-[#0077e6] text-white px-4 py-2 rounded-xl transition-all shadow-[0_0_16px_rgba(10,132,255,0.3)] font-['Space_Grotesk',sans-serif]"
+            className="text-xs font-bold bg-[#0A84FF] hover:bg-[#0077e6] text-white px-4 py-2 rounded-xl transition-all shadow-[0_0_16px_rgba(10,132,255,0.3)]"
           >
             Check Subscription Leaks
           </Link>
@@ -58,7 +58,7 @@ export default function ActiveSubscriptionsList({ subscriptions = [] }) {
                 className="flex items-center justify-between p-3.5 rounded-xl bg-[#0B1029] hover:bg-[#161F48] border border-white/5 hover:border-white/15 transition-all duration-200"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#161F48] text-[#0A84FF] border border-[#0A84FF]/30 flex items-center justify-center font-bold text-xs shadow-sm font-['Space_Grotesk',sans-serif]">
+                  <div className="w-9 h-9 rounded-xl bg-[#161F48] text-[#0A84FF] border border-[#0A84FF]/30 flex items-center justify-center font-bold text-xs shadow-sm">
                     {item.name ? item.name.charAt(0).toUpperCase() : "S"}
                   </div>
                   <div>
@@ -72,7 +72,7 @@ export default function ActiveSubscriptionsList({ subscriptions = [] }) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-white font-['Space_Grotesk',sans-serif]">
+                  <span className="font-bold text-sm text-white">
                     {formattedAmount}
                   </span>
                   {item.isLeak && (

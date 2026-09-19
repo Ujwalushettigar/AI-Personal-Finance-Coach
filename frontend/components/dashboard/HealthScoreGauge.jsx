@@ -28,11 +28,11 @@ export default function HealthScoreGauge({ score }) {
   const dashOffset = score !== null && score !== undefined ? maxDash - (maxDash * normalizedScore) / 100 : maxDash;
 
   return (
-    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-between h-full space-y-4 text-white font-['DM_Sans',sans-serif]">
+    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-between h-full space-y-4 text-white">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-[#39FF14]" />
-          <h2 className="text-xs font-bold text-[#8A93B5] uppercase tracking-wider font-['Space_Grotesk',sans-serif]">
+          <h2 className="text-xs font-bold text-[#8A93B5] uppercase tracking-wider">
             Health Score Gauge
           </h2>
         </div>
@@ -89,7 +89,7 @@ export default function HealthScoreGauge({ score }) {
               />
             </svg>
             <div className="absolute inset-x-0 bottom-0 text-center flex flex-col items-center">
-              <span className="text-4xl font-extrabold text-white tracking-tight font-['Space_Grotesk',sans-serif]">
+              <span className="text-4xl font-extrabold text-white tracking-tight">
                 {score}
               </span>
               <span className="text-[11px] font-semibold text-[#8A93B5] uppercase">out of 100</span>
@@ -98,7 +98,7 @@ export default function HealthScoreGauge({ score }) {
 
           {gradeInfo && (
             <div className="flex items-center gap-2.5 pt-1">
-              <span className="text-sm font-bold text-white bg-[#0B1029] px-3 py-1 rounded-xl border border-white/10 font-['Space_Grotesk',sans-serif]">
+              <span className="text-sm font-bold text-white bg-[#0B1029] px-3 py-1 rounded-xl border border-white/10">
                 Grade {gradeInfo.letter}
               </span>
               <span className={`text-xs font-bold px-3 py-1 rounded-full border ${gradeInfo.color}`}>

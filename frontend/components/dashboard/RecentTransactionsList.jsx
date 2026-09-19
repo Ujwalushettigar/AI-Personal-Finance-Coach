@@ -16,9 +16,9 @@ export default function RecentTransactionsList({ transactions = [] }) {
   const displayItems = Array.isArray(transactions) ? transactions.slice(0, 5) : [];
 
   return (
-    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-between space-y-4 text-white font-['DM_Sans',sans-serif]">
+    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-between space-y-4 text-white">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-bold text-[#8A93B5] uppercase tracking-wider font-['Space_Grotesk',sans-serif]">
+        <h2 className="text-xs font-bold text-[#8A93B5] uppercase tracking-wider">
           Recent Transactions
         </h2>
         <Link
@@ -39,7 +39,7 @@ export default function RecentTransactionsList({ transactions = [] }) {
           </p>
           <Link
             href="/transactions"
-            className="text-xs font-bold bg-[#39FF14] hover:bg-[#32e012] text-[#0A0E27] px-4 py-2 rounded-xl transition-all shadow-[0_0_16px_rgba(57,255,20,0.25)] font-['Space_Grotesk',sans-serif]"
+            className="text-xs font-bold bg-[#39FF14] hover:bg-[#32e012] text-[#0A0E27] px-4 py-2 rounded-xl transition-all shadow-[0_0_16px_rgba(57,255,20,0.25)]"
           >
             Go to Transactions
           </Link>
@@ -83,7 +83,7 @@ export default function RecentTransactionsList({ transactions = [] }) {
                 </div>
 
                 <div
-                  className={`font-bold text-sm font-['Space_Grotesk',sans-serif] ${isIncome ? "text-[#22D36A]" : "text-[#FF4D6A]"
+                  className={`font-bold text-sm ${isIncome ? "text-[#22D36A]" : "text-[#FF4D6A]"
                     }`}
                 >
                   {isIncome ? "+" : "-"}{formattedAmount}

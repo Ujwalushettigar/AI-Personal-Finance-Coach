@@ -87,10 +87,10 @@ export default function CoachPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0E27] p-6 flex items-center justify-center text-white font-['DM_Sans',sans-serif]">
+      <div className="min-h-screen bg-[#0A0E27] p-6 flex items-center justify-center text-white">
         <div className="flex items-center gap-3">
           <Loader2 className="w-6 h-6 animate-spin text-[#39FF14]" />
-          <span className="text-sm font-semibold text-[#8A93B5] font-['Space_Grotesk',sans-serif]">
+          <span className="text-sm font-semibold text-[#8A93B5]">
             Loading AI Coach...
           </span>
         </div>
@@ -99,7 +99,7 @@ export default function CoachPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-65px)] bg-[#0A0E27] text-white flex flex-col p-4 sm:p-6 md:p-8 font-['DM_Sans',sans-serif]">
+    <div className="min-h-[calc(100vh-65px)] bg-[#0A0E27] text-white flex flex-col p-4 sm:p-6 md:p-8">
       <div className="max-w-4xl w-full mx-auto flex-1 flex flex-col bg-[#0F1633] border border-white/10 rounded-2xl backdrop-blur-xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-white/10 bg-[#0B1029] flex items-center justify-between">
@@ -108,9 +108,9 @@ export default function CoachPage() {
               <Bot className="w-5 h-5 text-[#39FF14]" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white flex items-center gap-2 font-['Space_Grotesk',sans-serif]">
+              <h1 className="text-lg font-bold text-white flex items-center gap-2">
                 FinPilot AI Coach
-                <span className="text-[10px] font-extrabold uppercase bg-[#39FF14]/15 text-[#39FF14] border border-[#39FF14]/30 px-2.5 py-0.5 rounded-full tracking-wider font-['Space_Grotesk',sans-serif]">
+                <span className="text-[10px] font-extrabold uppercase bg-[#39FF14]/15 text-[#39FF14] border border-[#39FF14]/30 px-2.5 py-0.5 rounded-full tracking-wider">
                   Gemini 2.0
                 </span>
               </h1>
@@ -135,7 +135,7 @@ export default function CoachPage() {
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${msg.role === "user"
-                    ? "bg-[#0A84FF] text-white shadow-[0_0_12px_rgba(10,132,255,0.4)] font-['Space_Grotesk',sans-serif]"
+                    ? "bg-[#0A84FF] text-white shadow-[0_0_12px_rgba(10,132,255,0.4)]"
                     : "bg-[#161F48] border border-[#39FF14]/30 text-[#39FF14]"
                   }`}
               >
@@ -171,7 +171,7 @@ export default function CoachPage() {
         {/* Prompt Suggestions (if few messages) */}
         {messages.length <= 2 && !isTyping && (
           <div className="px-4 sm:px-6 pb-2">
-            <div className="text-xs font-semibold text-[#8A93B5] mb-2 flex items-center gap-1 font-['Space_Grotesk',sans-serif]">
+            <div className="text-xs font-semibold text-[#8A93B5] mb-2 flex items-center gap-1">
               <Zap className="w-3.5 h-3.5 text-[#39FF14]" /> Quick Prompt Suggestions:
             </div>
             <div className="flex flex-wrap gap-2">
@@ -179,7 +179,7 @@ export default function CoachPage() {
                 <button
                   key={idx}
                   onClick={() => handleSend(null, prompt)}
-                  className="text-xs text-[#8A93B5] hover:text-white bg-[#0B1029] hover:bg-[#161F48] border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-xl transition-all font-['DM_Sans',sans-serif]"
+                  className="text-xs text-[#8A93B5] hover:text-white bg-[#0B1029] hover:bg-[#161F48] border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-xl transition-all"
                 >
                   {prompt}
                 </button>
@@ -195,12 +195,12 @@ export default function CoachPage() {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Ask your AI coach a financial question..."
-            className="flex-1 bg-[#070B1E] border border-white/15 rounded-xl px-4 py-3 text-sm text-white placeholder-[#8A93B5]/60 focus:border-[#0A84FF] focus:outline-none focus:ring-1 focus:ring-[#0A84FF] transition-all font-['DM_Sans',sans-serif]"
+            className="flex-1 bg-[#070B1E] border border-white/15 rounded-xl px-4 py-3 text-sm text-white placeholder-[#8A93B5]/60 focus:border-[#0A84FF] focus:outline-none focus:ring-1 focus:ring-[#0A84FF] transition-all"
           />
           <button
             type="submit"
             disabled={!inputMessage.trim() || isTyping}
-            className="bg-[#39FF14] hover:bg-[#32e012] text-[#0A0E27] font-bold px-5 py-3 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-[0_0_18px_rgba(57,255,20,0.3)] hover:scale-[1.02] active:scale-[0.98] font-['Space_Grotesk',sans-serif]"
+            className="bg-[#39FF14] hover:bg-[#32e012] text-[#0A0E27] font-bold px-5 py-3 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-[0_0_18px_rgba(57,255,20,0.3)] hover:scale-[1.02] active:scale-[0.98]"
           >
             <span>Send</span>
             <Send className="w-4 h-4 text-[#0A0E1A]" />

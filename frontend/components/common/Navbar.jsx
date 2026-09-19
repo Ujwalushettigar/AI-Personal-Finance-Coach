@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
-import { LogOut } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 
 /**
  * Navbar (CryptoVault Fintech Theme)
@@ -41,10 +41,10 @@ export default function Navbar() {
   const navItems = user ? authenticatedNavItems : publicNavItems;
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0A0E27]/90 backdrop-blur-xl border-b border-white/10 text-white font-['DM_Sans',sans-serif]">
+    <header className="sticky top-0 z-50 bg-[#0A0E27]/90 backdrop-blur-xl border-b border-white/10 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link href="/dashboard" className="font-extrabold text-xl tracking-tight text-white flex items-center gap-2.5 font-['Space_Grotesk',sans-serif]">
+        <Link href="/dashboard" className="font-extrabold text-xl tracking-tight text-white flex items-center gap-2.5">
           <span className="bg-[#39FF14] text-[#0A0E27] rounded-lg px-2.5 py-1 text-xs font-black shadow-[0_0_16px_rgba(57,255,20,0.4)] tracking-wider">
             FP
           </span>
@@ -62,8 +62,8 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 ${isActive
-                    ? "bg-[#39FF14] text-[#0A0E27] font-extrabold shadow-[0_0_16px_rgba(57,255,20,0.35)] scale-105 font-['Space_Grotesk',sans-serif]"
-                    : "text-[#8A93B5] hover:text-white hover:bg-white/5"
+                  ? "bg-[#39FF14] text-[#0A0E27] font-extrabold shadow-[0_0_16px_rgba(57,255,20,0.35)] scale-105"
+                  : "text-[#8A93B5] hover:text-white hover:bg-white/5"
                   }`}
               >
                 {item.label}
@@ -80,7 +80,7 @@ export default function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-2.5 bg-[#0B1029] border border-white/10 rounded-full pl-1.5 pr-3 py-1 shadow-sm">
-              <div className="w-7 h-7 rounded-full bg-[#161F48] text-[#39FF14] border border-[#39FF14]/30 font-bold text-xs flex items-center justify-center uppercase shadow-sm font-['Space_Grotesk',sans-serif]">
+              <div className="w-7 h-7 rounded-full bg-[#161F48] text-[#39FF14] border border-[#39FF14]/30 font-bold text-xs flex items-center justify-center uppercase shadow-sm">
                 {user.email ? user.email.charAt(0) : "U"}
               </div>
               <span className="text-xs font-semibold text-text-primary hidden sm:inline max-w-[120px] truncate">
@@ -97,7 +97,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="text-xs font-bold bg-[#39FF14] hover:bg-[#32e012] text-[#0A0E27] px-4 py-1.5 rounded-full transition-all shadow-[0_0_16px_rgba(57,255,20,0.3)] font-['Space_Grotesk',sans-serif]"
+              className="text-xs font-bold bg-[#39FF14] hover:bg-[#32e012] text-[#0A0E27] px-4 py-1.5 rounded-full transition-all shadow-[0_0_16px_rgba(57,255,20,0.3)]"
             >
               Log In
             </Link>

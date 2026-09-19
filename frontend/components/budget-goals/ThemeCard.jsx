@@ -22,7 +22,7 @@ export function BadgePill({ icon, text, className = '' }) {
       className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide bg-[#0A84FF]/[0.12] border border-[#0A84FF]/30 text-[#0A84FF] backdrop-blur-sm ${className}`}
     >
       {icon && <span className="text-sm leading-none flex items-center justify-center">{icon}</span>}
-      <span className="font-['DM_Sans',sans-serif]">{text}</span>
+      <span>{text}</span>
     </div>
   );
 }
@@ -44,14 +44,14 @@ export function SectionHeading({
       {badgeText && (
         <BadgePill icon={badgeIcon} text={badgeText} className="mb-3" />
       )}
-      <h2 className="text-2xl sm:text-3xl md:text-[38px] font-bold text-white tracking-tight leading-[1.15] font-['Space_Grotesk',sans-serif]">
+      <h2 className="text-2xl sm:text-3xl md:text-[38px] font-bold text-white tracking-tight leading-[1.15]">
         {normalText}{' '}
         <span className="bg-gradient-to-r from-[#0A84FF] via-[#22D36A] to-[#39FF14] bg-clip-text text-transparent">
           {gradientText}
         </span>
       </h2>
       {subtitle && (
-        <p className="text-sm sm:text-base text-[#8A93B5] mt-2 max-w-2xl font-normal font-['DM_Sans',sans-serif] leading-relaxed">
+        <p className="text-sm sm:text-base text-[#8A93B5] mt-2 max-w-2xl font-normal leading-relaxed">
           {subtitle}
         </p>
       )}
@@ -100,7 +100,7 @@ export function PrimaryButton({ children, className = '', onClick, type = 'butto
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`px-5 py-2.5 rounded-[12px] bg-[#39FF14] hover:bg-[#32e012] text-[#0A0E27] font-semibold text-sm tracking-tight transition-all duration-200 hover:shadow-[0_0_24px_rgba(57,255,20,0.35)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none font-['Space_Grotesk',sans-serif] flex items-center justify-center gap-2 ${className}`}
+      className={`px-5 py-2.5 rounded-[12px] bg-[#39FF14] hover:bg-[#32e012] text-[#0A0E27] font-semibold text-sm tracking-tight transition-all duration-200 hover:shadow-[0_0_24px_rgba(57,255,20,0.35)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 ${className}`}
     >
       {children}
     </button>
@@ -114,7 +114,7 @@ export function SecondaryButton({ children, className = '', onClick, type = 'but
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`px-4 py-2 rounded-[12px] bg-transparent hover:bg-white/[0.05] text-[#8A93B5] hover:text-white font-medium text-sm transition-all duration-150 border border-white/[0.08] hover:border-white/[0.18] flex items-center justify-center gap-2 font-['DM_Sans',sans-serif] disabled:opacity-50 ${className}`}
+      className={`px-4 py-2 rounded-[12px] bg-transparent hover:bg-white/[0.05] text-[#8A93B5] hover:text-white font-medium text-sm transition-all duration-150 border border-white/[0.08] hover:border-white/[0.18] flex items-center justify-center gap-2 disabled:opacity-50 ${className}`}
     >
       {children}
     </button>
