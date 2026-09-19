@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { detectSubscriptions, getSubscriptions } from '../../services/api/subscriptions';
+import { detectSubscriptions, getSubscriptions, addSubscription } from '../../services/api/subscriptions';
 
 const emptyData = { summary: {}, subscriptions: [], recurringExpenses: [], leaks: [] };
 
@@ -24,6 +24,28 @@ export default function SubscriptionsPage() {
 	const [rarelyUsedIds, setRarelyUsedIds] = useState([]);
 	const [reviewing, setReviewing] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState('');
+	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+	const [newSubForm, setNewSubForm] = useState({ merchant: '', cadence: 'monthly', amount: '' });
+	const [isAdding, setIsAdding] = useState(false);
+	const [addError, setAddError] = useState('');
+
+	async function handleAddSubscription(e) {
+		e.preventDefault();
+		if (!newSubForm.merchant || !newSubForm.amount) return;
+		setIsAdding(true);
+		setAddError('');
+		try {
+			await addSubscription(newSubForm);
+			const result = await getSubscriptions();
+			setData({ ...emptyData, ...result });
+			setIsAddModalOpen(false);
+			setNewSubForm({ merchant: '', cadence: 'monthly', amount: '' });
+		} catch (err) {
+			setAddError(err.message || 'Failed to add subscription');
+		} finally {
+			setIsAdding(false);
+		}
+	}
 
 	useEffect(() => {
 		getSubscriptions().then((result) => {
@@ -60,7 +82,10 @@ export default function SubscriptionsPage() {
 		<div style={styles.shell}>
 			<header style={styles.header}>
 				<div><div style={styles.eyebrow}>FINPILOT / SPENDING INTELLIGENCE</div><h1 style={styles.title}>Subscriptions</h1><p style={styles.subtitle}>See every recurring payment, what it costs, and where your money may be quietly leaking.</p></div>
-				<div style={styles.status}>{loading ? 'Analyzing transactions…' : error ? 'Unable to load live data' : 'Live transaction analysis'}<span style={{ ...styles.statusDot, background: error ? '#d94c58' : '#16a36a' }} /></div>
+				<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
+					<button onClick={() => setIsAddModalOpen(true)} style={{ ...styles.reviewButton, whiteSpace: 'nowrap', alignSelf: 'flex-end' }}>+ Add Subscription</button>
+					<div style={styles.status}>{loading ? 'Analyzing transactions…' : error ? 'Unable to load live data' : 'Live transaction analysis'}<span style={{ ...styles.statusDot, background: error ? '#d94c58' : '#16a36a' }} /></div>
+				</div>
 			</header>
 			{error && <div style={styles.error}>{error}. Please sign in and try again.</div>}
 
@@ -89,6 +114,39 @@ export default function SubscriptionsPage() {
 
 			<section style={styles.panel}><div style={styles.panelHeader}><div><h2 style={styles.panelTitle}>Recurring expenses</h2><p style={styles.panelHint}>Every repeated expense pattern found in your transaction history</p></div><span style={styles.count}>{recurring.length}</span></div><div style={styles.tableWrap}><table style={styles.table}><thead><tr><th>Merchant</th><th>Pattern</th><th>Typical payment</th><th>Next payment</th><th>Confidence</th></tr></thead><tbody>{recurring.map((item) => <tr key={item.id}><td style={styles.tableMerchant}>{item.merchant}</td><td style={styles.capitalize}>{item.cadence}</td><td>{money(item.amount)}</td><td>{dateLabel(item.nextExpectedPayment)}</td><td><Confidence value={item.confidence} /></td></tr>)}</tbody></table></div></section>
 			<footer style={styles.footer}>Confidence is based on payment timing, amount consistency, and transaction history. Always confirm a subscription before cancelling it.</footer>
+
+			{isAddModalOpen && (
+				<div style={styles.modalOverlay}>
+					<div style={styles.modalContent}>
+						<h2 style={{ margin: '0 0 16px', fontSize: 20 }}>Add Subscription</h2>
+						{addError && <div style={styles.error}>{addError}</div>}
+						<form onSubmit={handleAddSubscription} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+							<div>
+								<label style={styles.modalLabel}>Merchant Name</label>
+								<input type="text" required value={newSubForm.merchant} onChange={e => setNewSubForm({...newSubForm, merchant: e.target.value})} style={styles.modalInput} placeholder="e.g. Netflix" />
+							</div>
+							<div>
+								<label style={styles.modalLabel}>Amount</label>
+								<input type="number" step="0.01" required min="0" value={newSubForm.amount} onChange={e => setNewSubForm({...newSubForm, amount: e.target.value})} style={styles.modalInput} placeholder="e.g. 15.99" />
+							</div>
+							<div>
+								<label style={styles.modalLabel}>Cadence</label>
+								<select value={newSubForm.cadence} onChange={e => setNewSubForm({...newSubForm, cadence: e.target.value})} style={styles.modalInput}>
+									<option value="weekly">Weekly</option>
+									<option value="biweekly">Bi-weekly</option>
+									<option value="monthly">Monthly</option>
+									<option value="quarterly">Quarterly</option>
+									<option value="yearly">Yearly</option>
+								</select>
+							</div>
+							<div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+								<button type="submit" disabled={isAdding} style={{ ...styles.reviewButton, flex: 1, opacity: isAdding ? 0.7 : 1 }}>{isAdding ? 'Adding...' : 'Save Subscription'}</button>
+								<button type="button" onClick={() => setIsAddModalOpen(false)} style={{ ...styles.reviewButton, flex: 1, background: '#e7eaf1', color: '#162033' }}>Cancel</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
 		</div>
 	</main>;
 }
@@ -114,4 +172,8 @@ const styles = {
 	subscriptionList: { display: 'grid', gap: 4 }, subscriptionRow: { display: 'flex', gap: 13, alignItems: 'center', padding: '13px 0', borderTop: '1px solid #f0f2f6' }, merchantIcon: { display: 'grid', placeItems: 'center', width: 38, height: 38, flex: '0 0 38px', borderRadius: 11, background: '#eef0ff', color: '#5b6cf5', fontWeight: 800 }, subscriptionMain: { minWidth: 0, flex: 1 }, merchantName: { fontWeight: 750, fontSize: 14 }, meta: { color: '#8a94a7', fontSize: 11, marginTop: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, progress: { height: 4, background: '#edf0f5', borderRadius: 4, marginTop: 10, maxWidth: 220 }, progressBar: { display: 'block', height: '100%', borderRadius: 4, background: '#16a36a' }, subscriptionCost: { textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }, subscriptionCostStrong: { fontSize: 14 }, subscriptionCostLabel: { color: '#98a1b2', fontSize: 10 }, confidence: { display: 'inline-block', borderRadius: 5, padding: '4px 6px', fontSize: 10, fontWeight: 750, whiteSpace: 'nowrap' },
 	leakRow: { padding: '14px 0', borderTop: '1px solid #f0f2f6' }, leakTop: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 13 }, severity: { fontSize: 10, textTransform: 'uppercase', letterSpacing: .5, fontWeight: 800 }, leakCost: { marginLeft: 'auto', fontWeight: 800 }, reason: { color: '#8a94a7', fontSize: 11, margin: '8px 0' }, savings: { color: '#16a36a', background: '#eefaf5', borderRadius: 7, padding: '7px 9px', fontSize: 11 }, empty: { color: '#8a94a7', fontSize: 13, padding: '20px 0' },
 	tableWrap: { overflowX: 'auto' }, table: { width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 620 }, th: { textAlign: 'left', padding: '10px 12px', color: '#98a1b2', fontSize: 10, textTransform: 'uppercase', letterSpacing: .7, borderBottom: '1px solid #edf0f5' }, td: { padding: '14px 12px', borderBottom: '1px solid #f0f2f6', color: '#6d7890' }, tableMerchant: { color: '#162033', fontWeight: 750 }, capitalize: { textTransform: 'capitalize' }, footer: { color: '#98a1b2', fontSize: 11, textAlign: 'center', padding: '2px 0 20px' },
+	modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(4px)' },
+	modalContent: { background: '#fff', padding: '24px', borderRadius: '16px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
+	modalLabel: { display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: '#162033' },
+	modalInput: { width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #dce2f1', fontSize: '14px', outline: 'none' },
 };

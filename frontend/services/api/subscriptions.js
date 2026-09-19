@@ -36,6 +36,13 @@ export function getSubscriptionLeaks() {
 	return request('/subscriptions/leaks');
 }
 
+export function addSubscription(data) {
+	return request('/subscriptions', {
+		method: 'POST',
+		body: JSON.stringify(data),
+	});
+}
+
 export function detectSubscriptions(transactions, rarelyUsedIds = []) {
 	return request('/subscriptions/detect', {
 		method: 'POST',
