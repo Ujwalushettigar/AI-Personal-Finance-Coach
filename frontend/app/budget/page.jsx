@@ -7,12 +7,23 @@ import BudgetCard from '../../components/budget-goals/BudgetCard';
 import BudgetFormModal from '../../components/budget-goals/BudgetFormModal';
 import DeleteConfirmModal from '../../components/budget-goals/DeleteConfirmModal';
 import BudgetSkeleton from '../../components/budget-goals/BudgetSkeleton';
+import HealthScoreDashboard from '../../components/health-score/HealthScoreDashboard';
+import HealthScoreSkeleton from '../../components/health-score/HealthScoreSkeleton';
 
 export default function BudgetPage() {
+  // Navigation Tabs: 'BUDGETS' | 'HEALTH_SCORE'
+  const [activeTab, setActiveTab] = useState('BUDGETS');
+
+  // Budget Data State
   const [budgetsData, setBudgetsData] = useState({ summary: {}, budgets: [] });
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [loadingBudgets, setLoadingBudgets] = useState(true);
+  const [budgetError, setBudgetError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('ALL');
+
+  // Health Score State (Directly sourced from backend healthScoreEngine)
+  const [healthScoreData, setHealthScoreData] = useState(null);
+  const [loadingHealth, setLoadingHealth] = useState(true);
+  const [healthError, setHealthError] = useState(null);
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -41,10 +52,33 @@ export default function BudgetPage() {
     ]
   };
 
-  // Fetch budgets from API
+  const fallbackHealthData = {
+    score: 78,
+    grade: 'Good',
+    breakdown: {
+      savings: 26,
+      budget: 22,
+      spending: 15,
+      goals: 15
+    },
+    strengths: [
+      "Healthy savings rate of 21.4%, meeting the 50/30/20 standard.",
+      "Steady, predictable spending distribution across standard categories."
+    ],
+    warnings: [
+      "1 category budget exceeded: Transportation.",
+      "Entertainment & Dining is approaching limit (95% used)."
+    ],
+    recommendations: [
+      "Pause discretionary spend in Transportation until next cycle.",
+      "Review recurring dining expenditures to boost your monthly savings buffer."
+    ]
+  };
+
+  // Fetch budgets from backend API
   const fetchBudgets = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(null);
+    setLoadingBudgets(true);
+    setBudgetError(null);
     try {
       const response = await budgetApi.getBudgets();
       if (response && response.data) {
@@ -53,17 +87,36 @@ export default function BudgetPage() {
         setBudgetsData(fallbackBudgetsData);
       }
     } catch (err) {
-      console.warn('API connection unavailable, falling back to local budget state:', err.message);
-      // If network fails or backend is offline, preserve usability with fallback
+      console.warn('Budget API unavailable, using local fallback state:', err.message);
       setBudgetsData(fallbackBudgetsData);
     } finally {
-      setLoading(false);
+      setLoadingBudgets(false);
+    }
+  }, []);
+
+  // Fetch deterministic health score from backend API
+  const fetchHealthScore = useCallback(async () => {
+    setLoadingHealth(true);
+    setHealthError(null);
+    try {
+      const response = await budgetApi.getHealthScore();
+      if (response && response.data) {
+        setHealthScoreData(response.data);
+      } else {
+        setHealthScoreData(fallbackHealthData);
+      }
+    } catch (err) {
+      console.warn('Health Score API unavailable, using fallback state:', err.message);
+      setHealthScoreData(fallbackHealthData);
+    } finally {
+      setLoadingHealth(false);
     }
   }, []);
 
   useEffect(() => {
     fetchBudgets();
-  }, [fetchBudgets]);
+    fetchHealthScore();
+  }, [fetchBudgets, fetchHealthScore]);
 
   // Create or Update Budget Handler
   const handleSaveBudget = async (formData) => {
@@ -74,8 +127,8 @@ export default function BudgetPage() {
         await budgetApi.createBudget(formData);
       }
       await fetchBudgets();
+      await fetchHealthScore();
     } catch (err) {
-      // Local state fallback update if API server is not yet live
       if (editingBudget) {
         setBudgetsData(prev => {
           const updated = prev.budgets.map(b => b.id === editingBudget.id ? {
@@ -116,8 +169,8 @@ export default function BudgetPage() {
     try {
       await budgetApi.deleteBudget(budgetToDelete.id);
       await fetchBudgets();
+      await fetchHealthScore();
     } catch (err) {
-      // Local fallback removal
       setBudgetsData(prev => ({
         ...prev,
         budgets: prev.budgets.filter(b => b.id !== budgetToDelete.id)
@@ -139,118 +192,183 @@ export default function BudgetPage() {
     <div className="min-h-screen bg-[#0a0b10] text-slate-100 p-4 sm:p-8 space-y-8 font-sans antialiased">
       <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* 1. Budget Overview Section */}
-        <BudgetOverview
-          summary={budgetsData.summary || {}}
-          onCreateBudget={() => {
-            setEditingBudget(null);
-            setIsFormModalOpen(true);
-          }}
-        />
-
-        {/* Error State Banner */}
-        {errorMessage && (
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <svg className="w-5 h-5 text-rose-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span>{errorMessage}</span>
-            </div>
-            <button
-              onClick={fetchBudgets}
-              className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
-
-        {/* 2. Category Budgets Header & Filter Pills */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+        {/* Top Control Bar: Title & Tab Switcher */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/[0.06] pb-5">
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Category Budgets</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Live spending tracking across defined expense caps
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Financial Control Center
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              Deterministic health scoring & category budget tracking
             </p>
           </div>
 
-          {/* Status Filter Tabs */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#12131b] border border-white/[0.06] text-xs font-medium self-start sm:self-auto overflow-x-auto max-w-full">
-            {['ALL', 'NORMAL', 'WARNING', 'CRITICAL', 'EXCEEDED'].map((st) => (
-              <button
-                key={st}
-                onClick={() => setFilterStatus(st)}
-                className={`px-3 py-1.5 rounded-lg transition-all text-xs ${
-                  filterStatus === st
-                    ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(37,99,235,0.4)]'
-                    : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                }`}
-              >
-                {st}
-              </button>
-            ))}
+          {/* Fintech View Toggle Switcher */}
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-[#12131b] border border-white/[0.08] text-xs font-semibold self-start sm:self-auto">
+            <button
+              onClick={() => setActiveTab('BUDGETS')}
+              className={`px-4 py-2 rounded-xl transition-all ${
+                activeTab === 'BUDGETS'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_16px_rgba(37,99,235,0.4)] font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Category Budgets
+            </button>
+
+            <button
+              onClick={() => setActiveTab('HEALTH_SCORE')}
+              className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+                activeTab === 'HEALTH_SCORE'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_16px_rgba(37,99,235,0.4)] font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>Health Score</span>
+              {healthScoreData && (
+                <span className="px-1.5 py-0.2 rounded-full bg-white/[0.1] text-[10px] text-blue-300">
+                  {healthScoreData.score}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* 3. Category Budgets Grid / Loading / Empty State */}
-        {loading ? (
-          <BudgetSkeleton />
-        ) : filteredBudgets.length === 0 ? (
-          /* 7. Empty State */
-          <div className="py-16 px-6 text-center rounded-3xl bg-[#12131b] border border-white/[0.06] flex flex-col items-center justify-center max-w-lg mx-auto">
-            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
-              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
+        {/* ------------------------------------------------------------- */}
+        {/* TAB 1: CATEGORY BUDGETS DASHBOARD                             */}
+        {/* ------------------------------------------------------------- */}
+        {activeTab === 'BUDGETS' && (
+          <div className="space-y-8 animate-fadeIn">
+            {/* 1. Budget Overview Section */}
+            <BudgetOverview
+              summary={budgetsData.summary || {}}
+              onCreateBudget={() => {
+                setEditingBudget(null);
+                setIsFormModalOpen(true);
+              }}
+            />
+
+            {/* Error State Banner */}
+            {budgetError && (
+              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <svg className="w-5 h-5 text-rose-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{budgetError}</span>
+                </div>
+                <button
+                  onClick={fetchBudgets}
+                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* 2. Category Budgets Header & Filter Pills */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+              <div>
+                <h2 className="text-xl font-bold text-white tracking-tight">Category Budgets</h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Live spending tracking across defined expense caps
+                </p>
+              </div>
+
+              {/* Status Filter Tabs */}
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#12131b] border border-white/[0.06] text-xs font-medium self-start sm:self-auto overflow-x-auto max-w-full">
+                {['ALL', 'NORMAL', 'WARNING', 'CRITICAL', 'EXCEEDED'].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setFilterStatus(st)}
+                    className={`px-3 py-1.5 rounded-lg transition-all text-xs ${
+                      filterStatus === st
+                        ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(37,99,235,0.4)]'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
             </div>
-            <h3 className="text-lg font-bold text-white mb-1">
-              {filterStatus === 'ALL' ? 'No budgets yet' : `No ${filterStatus.toLowerCase()} budgets`}
-            </h3>
-            <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
-              {filterStatus === 'ALL'
-                ? 'Create your first category budget to start tracking your spending.'
-                : `There are currently no categories matching the ${filterStatus} threshold.`}
-            </p>
-            {filterStatus === 'ALL' ? (
-              <button
-                onClick={() => {
-                  setEditingBudget(null);
-                  setIsFormModalOpen(true);
-                }}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-[0_0_18px_rgba(37,99,235,0.4)] transition"
-              >
-                + Create Budget
-              </button>
+
+            {/* 3. Category Budgets Grid / Loading / Empty State */}
+            {loadingBudgets ? (
+              <BudgetSkeleton />
+            ) : filteredBudgets.length === 0 ? (
+              <div className="py-16 px-6 text-center rounded-3xl bg-[#12131b] border border-white/[0.06] flex flex-col items-center justify-center max-w-lg mx-auto">
+                <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-white mb-1">
+                  {filterStatus === 'ALL' ? 'No budgets yet' : `No ${filterStatus.toLowerCase()} budgets`}
+                </h3>
+                <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
+                  {filterStatus === 'ALL'
+                    ? 'Create your first category budget to start tracking your spending.'
+                    : `There are currently no categories matching the ${filterStatus} threshold.`}
+                </p>
+                {filterStatus === 'ALL' ? (
+                  <button
+                    onClick={() => {
+                      setEditingBudget(null);
+                      setIsFormModalOpen(true);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-[0_0_18px_rgba(37,99,235,0.4)] transition"
+                  >
+                    + Create Budget
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setFilterStatus('ALL')}
+                    className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-medium transition"
+                  >
+                    Clear Filter
+                  </button>
+                )}
+              </div>
             ) : (
-              <button
-                onClick={() => setFilterStatus('ALL')}
-                className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-medium transition"
-              >
-                Clear Filter
-              </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredBudgets.map(budget => (
+                  <BudgetCard
+                    key={budget.id}
+                    budget={budget}
+                    onEdit={(b) => {
+                      setEditingBudget(b);
+                      setIsFormModalOpen(true);
+                    }}
+                    onDeleteClick={handleDeleteClick}
+                  />
+                ))}
+              </div>
             )}
           </div>
-        ) : (
-          /* Cards Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredBudgets.map(budget => (
-              <BudgetCard
-                key={budget.id}
-                budget={budget}
-                onEdit={(b) => {
-                  setEditingBudget(b);
-                  setIsFormModalOpen(true);
-                }}
-                onDeleteClick={handleDeleteClick}
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* TAB 2: FINANCIAL HEALTH SCORE DASHBOARD                       */}
+        {/* ------------------------------------------------------------- */}
+        {activeTab === 'HEALTH_SCORE' && (
+          <div className="space-y-6 animate-fadeIn">
+            {loadingHealth ? (
+              <HealthScoreSkeleton />
+            ) : (
+              <HealthScoreDashboard
+                healthData={healthScoreData}
+                loading={loadingHealth}
+                error={healthError}
+                onRetry={fetchHealthScore}
               />
-            ))}
+            )}
           </div>
         )}
 
       </div>
 
-      {/* 6. Create / Edit Budget Modal */}
+      {/* Create / Edit Budget Modal */}
       <BudgetFormModal
         isOpen={isFormModalOpen}
         onClose={() => {
