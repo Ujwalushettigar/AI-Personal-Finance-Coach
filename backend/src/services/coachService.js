@@ -11,10 +11,15 @@ async function askCoach(userMessage, userContext = {}) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const prompt = `You are a personal finance coach. Answer the user's question using ONLY the financial data provided below. Be concise, practical, and specific with numbers when available. If data is missing, say so rather than guessing.
+    const prompt = `You are FinPilot's AI Financial Coach. Your mission is to provide clear, friendly, practical, and highly helpful financial guidance to the user.
 
-Financial Data:
-${JSON.stringify(userContext, null, 2)}
+Financial Context Provided:
+${Object.keys(userContext).length > 0 ? JSON.stringify(userContext, null, 2) : "No custom user transaction data provided for this request."}
+
+Instructions:
+1. If financial context data is provided above, use it to give personalized analysis, exact calculations, and tailored recommendations.
+2. If financial context data is not provided or incomplete, DO NOT refuse to answer. Instead, answer the user's question thoroughly using standard personal finance principles, clear calculations, rules of thumb (e.g., 50/30/20 rule, emergency fund sizing, zero-based budgeting), and step-by-step actionable advice.
+3. Be concise, practical, encouraging, and easy to read.
 
 User Question: ${userMessage}`;
 
