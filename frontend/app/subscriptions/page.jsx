@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { getSubscriptions } from '../../services/api/subscriptions';
+import { detectSubscriptions, getSubscriptions } from '../../services/api/subscriptions';
 
 const fallbackData = {
 	summary: { totalSubscriptions: 4, monthlyCost: 110.15, yearlyCost: 1321.8 },
@@ -39,6 +39,9 @@ export default function SubscriptionsPage() {
 	const [data, setData] = useState(fallbackData);
 	const [loading, setLoading] = useState(true);
 	const [usingDemo, setUsingDemo] = useState(false);
+	const [rarelyUsedIds, setRarelyUsedIds] = useState([]);
+	const [reviewing, setReviewing] = useState(false);
+	const [reviewMessage, setReviewMessage] = useState('');
 
 	useEffect(() => {
 		getSubscriptions().then((result) => {
@@ -52,6 +55,28 @@ export default function SubscriptionsPage() {
 	const leaks = data.leaks || [];
 	const savings = useMemo(() => leaks.reduce((total, leak) => total + Number(leak.potentialMonthlySavings || 0), 0), [leaks]);
 
+	function toggleRarelyUsed(id) {
+		setRarelyUsedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+		setReviewMessage('');
+	}
+
+	async function reviewRarelyUsed() {
+		if (!rarelyUsedIds.length) return;
+		setReviewing(true);
+		try {
+			const result = await detectSubscriptions(undefined, rarelyUsedIds);
+			setData((current) => ({ ...current, ...result }));
+			setReviewMessage(`${rarelyUsedIds.length} subscription${rarelyUsedIds.length === 1 ? '' : 's'} added to your leak review.`);
+		} catch (error) {
+			const selected = subscriptions.filter((item) => rarelyUsedIds.includes(item.id));
+			const selectedLeaks = selected.map((item) => ({ id: `user-${item.id}`, subscriptionId: item.id, merchant: item.merchant, monthlyCost: item.monthlyCost, potentialMonthlySavings: item.monthlyCost, severity: 'high', confidence: item.confidence, reasons: ['You marked it as rarely used'] }));
+			setData((current) => ({ ...current, leaks: [...selectedLeaks, ...(current.leaks || []).filter((leak) => !rarelyUsedIds.includes(leak.subscriptionId))] }));
+			setReviewMessage('Your selections were added to the leak review.');
+		} finally {
+			setReviewing(false);
+		}
+	}
+
 	return <main style={styles.page}>
 		<div style={styles.shell}>
 			<header style={styles.header}>
@@ -64,6 +89,12 @@ export default function SubscriptionsPage() {
 				<MetricCard label="Monthly commitment" value={money(summary.monthlyCost)} detail="Average monthly spend" accent="#16a36a" />
 				<MetricCard label="Yearly commitment" value={money(summary.yearlyCost)} detail="Projected annual cost" accent="#d48a1f" />
 				<MetricCard label="Potential monthly leaks" value={money(savings)} detail={`${leaks.length} item${leaks.length === 1 ? '' : 's'} worth reviewing`} accent="#d94c58" />
+			</section>
+
+			<section style={styles.reviewPanel}>
+				<div style={styles.reviewCopy}><div style={styles.reviewIcon}>?</div><div><h2 style={styles.panelTitle}>Which subscriptions do you rarely use?</h2><p style={styles.panelHint}>Select anything you do not use often. We will flag it as a potential money leak for review.</p></div></div>
+				<div style={styles.reviewOptions}>{subscriptions.map((subscription) => <label key={subscription.id} style={{ ...styles.reviewOption, ...(rarelyUsedIds.includes(subscription.id) ? styles.reviewOptionSelected : {}) }}><input type="checkbox" checked={rarelyUsedIds.includes(subscription.id)} onChange={() => toggleRarelyUsed(subscription.id)} style={styles.checkbox} /><span style={styles.reviewMerchant}>{subscription.merchant}</span><span style={styles.reviewAmount}>{money(subscription.monthlyCost)}/mo</span></label>)}</div>
+				<div style={styles.reviewAction}><button type="button" onClick={reviewRarelyUsed} disabled={!rarelyUsedIds.length || reviewing} style={{ ...styles.reviewButton, opacity: !rarelyUsedIds.length || reviewing ? .55 : 1 }}>{reviewing ? 'Reviewing…' : `Review selected${rarelyUsedIds.length ? ` (${rarelyUsedIds.length})` : ''}`}</button>{reviewMessage && <span style={styles.reviewMessage}>{reviewMessage}</span>}</div>
 			</section>
 
 			<section style={styles.contentGrid}>
@@ -95,6 +126,7 @@ const styles = {
 	metricCard: { background: '#fff', border: '1px solid #e7eaf1', borderTop: '3px solid', borderRadius: 14, padding: '20px 21px', boxShadow: '0 8px 24px rgba(39, 52, 86, .04)' },
 	metricLabel: { display: 'block', color: '#6d7890', fontSize: 12, fontWeight: 700, marginBottom: 10 },
 	metricValue: { display: 'block', fontSize: 27, letterSpacing: -.7, marginBottom: 5 }, metricDetail: { color: '#98a1b2', fontSize: 12 },
+	reviewPanel: { background: '#f0f3ff', border: '1px solid #dce2ff', borderRadius: 16, padding: 22, marginBottom: 18 }, reviewCopy: { display: 'flex', gap: 12, alignItems: 'flex-start' }, reviewIcon: { display: 'grid', placeItems: 'center', width: 28, height: 28, flex: '0 0 28px', borderRadius: '50%', background: '#5b6cf5', color: '#fff', fontWeight: 800 }, reviewOptions: { display: 'flex', flexWrap: 'wrap', gap: 9, margin: '18px 0' }, reviewOption: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#fff', border: '1px solid #dce2f1', borderRadius: 9, cursor: 'pointer', fontSize: 12 }, reviewOptionSelected: { borderColor: '#5b6cf5', boxShadow: '0 0 0 2px #5b6cf522' }, checkbox: { accentColor: '#5b6cf5', width: 15, height: 15 }, reviewMerchant: { fontWeight: 750 }, reviewAmount: { color: '#6d7890' }, reviewAction: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }, reviewButton: { border: 0, borderRadius: 8, padding: '10px 14px', background: '#5b6cf5', color: '#fff', fontWeight: 750, cursor: 'pointer' }, reviewMessage: { color: '#16865a', fontSize: 12, fontWeight: 700 },
 	contentGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 18, marginBottom: 18 },
 	panel: { background: '#fff', border: '1px solid #e7eaf1', borderRadius: 16, padding: 22, boxShadow: '0 8px 24px rgba(39, 52, 86, .04)', marginBottom: 18 },
 	panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 18 }, panelTitle: { margin: 0, fontSize: 17, letterSpacing: -.2 }, panelHint: { margin: '6px 0 0', color: '#8a94a7', fontSize: 12 }, count: { display: 'grid', placeItems: 'center', minWidth: 28, height: 28, borderRadius: 9, background: '#eef0ff', color: '#5b6cf5', fontWeight: 800, fontSize: 12 },

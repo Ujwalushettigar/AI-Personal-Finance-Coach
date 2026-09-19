@@ -39,7 +39,8 @@ function transactionsFromRequest(req) {
 function analyze(req) {
 	const recurringExpenses = detectRecurringExpenses(transactionsFromRequest(req));
 	const subscriptions = recurringExpenses.filter((item) => item.likelySubscription);
-	const leaks = detectPotentialLeaks(subscriptions);
+	const rarelyUsedIds = Array.isArray(req.body?.rarelyUsedIds) ? req.body.rarelyUsedIds : [];
+	const leaks = detectPotentialLeaks(subscriptions, { rarelyUsedIds });
 	return { recurringExpenses, subscriptions, leaks };
 }
 

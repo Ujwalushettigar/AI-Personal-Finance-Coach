@@ -21,9 +21,9 @@ export function getSubscriptionLeaks() {
 	return request('/subscriptions/leaks');
 }
 
-export function detectSubscriptions(transactions) {
+export function detectSubscriptions(transactions, rarelyUsedIds = []) {
 	return request('/subscriptions/detect', {
 		method: 'POST',
-		body: JSON.stringify({ transactions }),
+		body: JSON.stringify({ transactions, rarelyUsedIds }),
 	});
 }
