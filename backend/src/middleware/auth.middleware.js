@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
+const { getSupabaseClient } = require('../config/db');
 
-function verifyAuth(req, res, next) {
+async function verifyAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -12,13 +12,13 @@ function verifyAuth(req, res, next) {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
-    if (!jwtSecret) {
+    const { data, error } = await getSupabaseClient(token).auth.getUser(token);
+    if (error || !data?.user) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    const decoded = jwt.verify(token, jwtSecret);
-    req.user = decoded;
+    req.user = data.user;
+    req.authToken = token;
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired token' });

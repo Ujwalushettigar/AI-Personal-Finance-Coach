@@ -49,7 +49,15 @@ export default function SignupPage() {
         }
       }
     } catch (err) {
-      setError(err.message || "Failed to create account");
+      const authError = err.message?.toLowerCase() || "";
+
+      if (authError.includes("rate limit") || authError.includes("over_email_send_rate_limit")) {
+        setError(
+          "Supabase has temporarily limited sign-up emails. Please wait a few minutes before trying again. If this email was already registered, use Log in instead."
+        );
+      } else {
+        setError(err.message || "Failed to create account");
+      }
     } finally {
       setSubmitting(false);
     }

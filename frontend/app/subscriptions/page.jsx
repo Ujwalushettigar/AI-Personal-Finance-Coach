@@ -3,25 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { detectSubscriptions, getSubscriptions } from '../../services/api/subscriptions';
 
-const fallbackData = {
-	summary: { totalSubscriptions: 4, monthlyCost: 110.15, yearlyCost: 1321.8 },
-	subscriptions: [
-		{ id: 'streamflix', merchant: 'StreamFlix', cadence: 'monthly', amount: 15.99, monthlyCost: 15.99, yearlyCost: 191.88, confidence: 96, nextExpectedPayment: '2026-09-05', transactionCount: 4 },
-		{ id: 'cloudbox', merchant: 'CloudBox Pro', cadence: 'monthly', amount: 49.99, monthlyCost: 49.99, yearlyCost: 599.88, confidence: 94, nextExpectedPayment: '2026-09-12', transactionCount: 4 },
-		{ id: 'fitstudio', merchant: 'Fit Studio', cadence: 'monthly', amount: 29, monthlyCost: 29, yearlyCost: 348, confidence: 90, nextExpectedPayment: '2026-09-01', transactionCount: 4 },
-		{ id: 'designannual', merchant: 'Design Annual', cadence: 'yearly', amount: 199, monthlyCost: 16.58, yearlyCost: 199, confidence: 62, nextExpectedPayment: '2027-08-20', transactionCount: 2 },
-	],
-	recurringExpenses: [
-		{ id: 'streamflix', merchant: 'StreamFlix', cadence: 'monthly', amount: 15.99, confidence: 96 },
-		{ id: 'cloudbox', merchant: 'CloudBox Pro', cadence: 'monthly', amount: 49.99, confidence: 94 },
-		{ id: 'fitstudio', merchant: 'Fit Studio', cadence: 'monthly', amount: 29, confidence: 90 },
-		{ id: 'designannual', merchant: 'Design Annual', cadence: 'yearly', amount: 199, confidence: 62 },
-	],
-	leaks: [
-		{ id: 'leak-cloudbox', merchant: 'CloudBox Pro', monthlyCost: 49.99, potentialMonthlySavings: 37.49, severity: 'high', confidence: 94, reasons: ['High recurring cost'] },
-		{ id: 'leak-designannual', merchant: 'Design Annual', monthlyCost: 16.58, potentialMonthlySavings: 8.29, severity: 'medium', confidence: 62, reasons: ['Pattern needs review', 'Annual renewal can be easy to miss'] },
-	],
-};
+const emptyData = { summary: {}, subscriptions: [], recurringExpenses: [], leaks: [] };
 
 const money = (value) => `$${Number(value || 0).toFixed(2)}`;
 const dateLabel = (value) => value ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not available';
@@ -36,17 +18,17 @@ function Confidence({ value }) {
 }
 
 export default function SubscriptionsPage() {
-	const [data, setData] = useState(fallbackData);
+	const [data, setData] = useState(emptyData);
 	const [loading, setLoading] = useState(true);
-	const [usingDemo, setUsingDemo] = useState(false);
+	const [error, setError] = useState('');
 	const [rarelyUsedIds, setRarelyUsedIds] = useState([]);
 	const [reviewing, setReviewing] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState('');
 
 	useEffect(() => {
 		getSubscriptions().then((result) => {
-			setData({ ...fallbackData, ...result });
-		}).catch(() => setUsingDemo(true)).finally(() => setLoading(false));
+			setData({ ...emptyData, ...result });
+		}).catch((requestError) => setError(requestError.message || 'Unable to load subscription data.')).finally(() => setLoading(false));
 	}, []);
 
 	const summary = data.summary || {};
@@ -68,10 +50,7 @@ export default function SubscriptionsPage() {
 			setData((current) => ({ ...current, ...result }));
 			setReviewMessage(`${rarelyUsedIds.length} subscription${rarelyUsedIds.length === 1 ? '' : 's'} added to your leak review.`);
 		} catch (error) {
-			const selected = subscriptions.filter((item) => rarelyUsedIds.includes(item.id));
-			const selectedLeaks = selected.map((item) => ({ id: `user-${item.id}`, subscriptionId: item.id, merchant: item.merchant, monthlyCost: item.monthlyCost, potentialMonthlySavings: item.monthlyCost, severity: 'high', confidence: item.confidence, reasons: ['You marked it as rarely used'] }));
-			setData((current) => ({ ...current, leaks: [...selectedLeaks, ...(current.leaks || []).filter((leak) => !rarelyUsedIds.includes(leak.subscriptionId))] }));
-			setReviewMessage('Your selections were added to the leak review.');
+			setReviewMessage(error.message || 'Unable to update the live leak analysis.');
 		} finally {
 			setReviewing(false);
 		}
@@ -81,8 +60,9 @@ export default function SubscriptionsPage() {
 		<div style={styles.shell}>
 			<header style={styles.header}>
 				<div><div style={styles.eyebrow}>FINPILOT / SPENDING INTELLIGENCE</div><h1 style={styles.title}>Subscriptions</h1><p style={styles.subtitle}>See every recurring payment, what it costs, and where your money may be quietly leaking.</p></div>
-				<div style={styles.status}>{loading ? 'Analyzing transactions…' : usingDemo ? 'Demo insights · API offline' : 'Live transaction analysis'}<span style={{ ...styles.statusDot, background: usingDemo ? '#d48a1f' : '#16a36a' }} /></div>
+				<div style={styles.status}>{loading ? 'Analyzing transactions…' : error ? 'Unable to load live data' : 'Live transaction analysis'}<span style={{ ...styles.statusDot, background: error ? '#d94c58' : '#16a36a' }} /></div>
 			</header>
+			{error && <div style={styles.error}>{error}. Please sign in and try again.</div>}
 
 			<section style={styles.metrics}>
 				<MetricCard label="Detected subscriptions" value={summary.totalSubscriptions ?? subscriptions.length} detail="Recurring merchants" accent="#5b6cf5" />
@@ -122,6 +102,7 @@ const styles = {
 	subtitle: { color: '#6d7890', fontSize: 15, lineHeight: 1.6, maxWidth: 580, margin: '12px 0 0' },
 	status: { color: '#6d7890', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', paddingTop: 10 },
 	statusDot: { width: 8, height: 8, borderRadius: '50%', display: 'inline-block' },
+	error: { background: '#fff0f1', border: '1px solid #ffd0d5', color: '#b52d3d', borderRadius: 12, padding: '12px 14px', marginBottom: 18, fontSize: 13 },
 	metrics: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14, marginBottom: 18 },
 	metricCard: { background: '#fff', border: '1px solid #e7eaf1', borderTop: '3px solid', borderRadius: 14, padding: '20px 21px', boxShadow: '0 8px 24px rgba(39, 52, 86, .04)' },
 	metricLabel: { display: 'block', color: '#6d7890', fontSize: 12, fontWeight: 700, marginBottom: 10 },
