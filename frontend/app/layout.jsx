@@ -13,9 +13,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen flex flex-col bg-[#070b16] text-slate-100 antialiased selection:bg-accent selection:text-slate-950">
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 w-full">
-            {children}
-          </main>
+          <main className="flex-1 w-full">{children}</main>
         </AuthProvider>
       </body>
     </html>
