@@ -2,14 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 
-/**
- * Budget Form Modal Component
- * Refined modal matching the dark fintech design system:
- * - Dark surface (#12131b) with thin subtle border
- * - Electric blue action button with subtle glow
- * - Inline form validation & error feedback
- * - Loading state during async submission
- */
 export default function BudgetFormModal({ isOpen, onClose, onSubmit, initialData = null }) {
   const [category, setCategory] = useState('');
   const [amountLimit, setAmountLimit] = useState('');
@@ -72,17 +64,17 @@ export default function BudgetFormModal({ isOpen, onClose, onSubmit, initialData
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-md p-6 rounded-2xl bg-[#12131b] border border-white/[0.08] shadow-[0_15px_40px_rgba(0,0,0,0.8)] text-slate-100">
+      <div className="w-full max-w-md p-6 rounded-2xl bg-[#0A0E1A] border border-border shadow-2xl text-text-primary">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 mb-5 border-b border-white/[0.06]">
-          <h2 className="text-lg font-bold text-white tracking-tight">
+        <div className="flex items-center justify-between pb-4 mb-5 border-b border-border">
+          <h2 className="text-lg font-bold text-text-primary tracking-tight">
             {initialData ? 'Edit Category Budget' : 'Create Category Budget'}
           </h2>
           <button 
             type="button"
             onClick={onClose} 
-            className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition text-sm"
+            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-text-muted hover:text-text-primary flex items-center justify-center transition text-sm"
           >
             ✕
           </button>
@@ -90,8 +82,8 @@ export default function BudgetFormModal({ isOpen, onClose, onSubmit, initialData
 
         {/* Validation Error Banner */}
         {validationError && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-            <svg className="w-4 h-4 flex-shrink-0 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="mb-4 p-3 rounded-xl bg-negative/10 border border-negative/20 text-negative text-xs flex items-center gap-2">
+            <svg className="w-4 h-4 shrink-0 text-negative" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{validationError}</span>
@@ -100,7 +92,7 @@ export default function BudgetFormModal({ isOpen, onClose, onSubmit, initialData
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">
               Category Name
             </label>
             <input 
@@ -109,14 +101,14 @@ export default function BudgetFormModal({ isOpen, onClose, onSubmit, initialData
               placeholder="e.g. Groceries, Dining, Transport"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#181a24] border border-white/[0.08] text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary text-sm placeholder-slate-500 focus:outline-none focus:border-accent transition"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-              Monthly Budget Limit ($)
+            <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">
+              Monthly Budget Limit (₹)
             </label>
             <input 
               type="number"
@@ -126,13 +118,13 @@ export default function BudgetFormModal({ isOpen, onClose, onSubmit, initialData
               placeholder="600"
               value={amountLimit}
               onChange={(e) => setAmountLimit(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#181a24] border border-white/[0.08] text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary text-sm placeholder-slate-500 focus:outline-none focus:border-accent transition"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-              Current Spent Amount ($)
+            <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">
+              Current Spent Amount (₹)
             </label>
             <input 
               type="number"
@@ -141,26 +133,26 @@ export default function BudgetFormModal({ isOpen, onClose, onSubmit, initialData
               placeholder="0"
               value={spent}
               onChange={(e) => setSpent(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#181a24] border border-white/[0.08] text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary text-sm placeholder-slate-500 focus:outline-none focus:border-accent transition"
             />
-            <p className="text-[11px] text-slate-500 mt-1">
+            <p className="text-[11px] text-text-muted mt-1">
               Initial or current cycle expenditure for this category.
             </p>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.06]">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-slate-300 text-xs font-medium transition disabled:opacity-50"
+              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-border text-text-muted text-xs font-medium transition disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-[0_0_18px_rgba(37,99,235,0.4)] transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-accent text-[#0A0E1A] text-xs font-bold shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
@@ -181,3 +173,4 @@ export default function BudgetFormModal({ isOpen, onClose, onSubmit, initialData
     </div>
   );
 }
+

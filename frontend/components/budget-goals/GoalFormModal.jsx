@@ -56,17 +56,17 @@ export default function GoalFormModal({ isOpen, onClose, onSubmit, initialData =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl text-slate-100">
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
-          <h2 className="text-xl font-bold">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+      <div className="w-full max-w-md p-6 rounded-2xl bg-[#0A0E1A] border border-border shadow-2xl text-text-primary">
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
+          <h2 className="text-xl font-bold text-text-primary">
             {mode === 'addFunds' 
               ? `Add Funds: ${initialData?.title}`
               : initialData ? 'Edit Savings Goal' : 'Create Savings Goal'}
           </h2>
           <button 
             onClick={onClose} 
-            className="text-slate-400 hover:text-white transition"
+            className="text-text-muted hover:text-text-primary transition"
           >
             ✕
           </button>
@@ -75,8 +75,8 @@ export default function GoalFormModal({ isOpen, onClose, onSubmit, initialData =
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'addFunds' ? (
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                Deposit Amount ($)
+              <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                Deposit Amount (₹)
               </label>
               <input 
                 type="number"
@@ -86,17 +86,17 @@ export default function GoalFormModal({ isOpen, onClose, onSubmit, initialData =
                 placeholder="100"
                 value={addFundsAmount}
                 onChange={(e) => setAddFundsAmount(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary placeholder-slate-500 focus:outline-none focus:border-accent transition"
                 autoFocus
               />
-              <p className="mt-2 text-xs text-slate-400">
-                Current Saved: ${initialData?.currentAmount?.toLocaleString()} / ${initialData?.targetAmount?.toLocaleString()}
+              <p className="mt-2 text-xs text-text-muted">
+                Current Saved: ₹{initialData?.currentAmount?.toLocaleString()} / ₹{initialData?.targetAmount?.toLocaleString()}
               </p>
             </div>
           ) : (
             <>
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                   Goal Title
                 </label>
                 <input 
@@ -105,13 +105,13 @@ export default function GoalFormModal({ isOpen, onClose, onSubmit, initialData =
                   placeholder="e.g. Emergency Fund, New Car"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary placeholder-slate-500 focus:outline-none focus:border-accent transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                  Target Amount ($)
+                <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                  Target Amount (₹)
                 </label>
                 <input 
                   type="number"
@@ -121,14 +121,14 @@ export default function GoalFormModal({ isOpen, onClose, onSubmit, initialData =
                   placeholder="5000"
                   value={targetAmount}
                   onChange={(e) => setTargetAmount(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary placeholder-slate-500 focus:outline-none focus:border-accent transition"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                    Initial Saved ($)
+                  <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                    Initial Saved (₹)
                   </label>
                   <input 
                     type="number"
@@ -137,12 +137,12 @@ export default function GoalFormModal({ isOpen, onClose, onSubmit, initialData =
                     placeholder="0"
                     value={currentAmount}
                     onChange={(e) => setCurrentAmount(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary placeholder-slate-500 focus:outline-none focus:border-accent transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                     Category
                   </label>
                   <input 
@@ -150,39 +150,39 @@ export default function GoalFormModal({ isOpen, onClose, onSubmit, initialData =
                     placeholder="Emergency, Tech"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary placeholder-slate-500 focus:outline-none focus:border-accent transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                   Target Completion Date (Optional)
                 </label>
                 <input 
                   type="date"
                   value={targetDate}
                   onChange={(e) => setTargetDate(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-indigo-500 transition"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary focus:outline-none focus:border-accent transition"
                 />
               </div>
             </>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition"
+              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-border text-text-muted font-medium transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className={`px-5 py-2 rounded-xl font-semibold shadow-lg transition ${
+              className={`px-5 py-2 rounded-xl font-bold text-sm shadow-md transition ${
                 mode === 'addFunds'
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
+                  ? 'bg-positive text-[#0A0E1A]'
+                  : 'bg-accent text-[#0A0E1A]'
               }`}
             >
               {mode === 'addFunds' ? 'Deposit Funds' : initialData ? 'Save Changes' : 'Create Goal'}
@@ -193,3 +193,4 @@ export default function GoalFormModal({ isOpen, onClose, onSubmit, initialData =
     </div>
   );
 }
+

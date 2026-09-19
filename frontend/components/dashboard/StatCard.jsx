@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import GlassCard from "../common/GlassCard";
 
 export default function StatCard({ label, value, trend }) {
   const [timeframe, setTimeframe] = useState("Month");
@@ -13,20 +14,20 @@ export default function StatCard({ label, value, trend }) {
       : value;
 
   return (
-    <div className="bg-slate-950/70 rounded-2xl p-6 shadow-xl border border-white/10 backdrop-blur-xl hover:border-white/20 transition-all duration-300 space-y-4">
+    <GlassCard className="hover:border-accent/30 transition-all duration-300 space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+        <span className="text-xs font-bold tracking-wider text-text-muted uppercase">
           {label}
         </span>
-        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 text-[11px] font-semibold text-slate-400">
+        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-border text-[11px] font-semibold text-text-muted">
           {["Week", "Month", "Year"].map((tf) => (
             <button
               key={tf}
               onClick={() => setTimeframe(tf)}
               className={`px-2.5 py-0.5 rounded-lg transition-all ${
                 timeframe === tf
-                  ? "bg-gradient-to-r from-rose-500 to-amber-500 text-white font-bold shadow-sm"
-                  : "hover:text-white"
+                  ? "bg-accent text-[#0A0E1A] font-bold shadow-sm"
+                  : "hover:text-text-primary"
               }`}
             >
               {tf}
@@ -36,7 +37,7 @@ export default function StatCard({ label, value, trend }) {
       </div>
 
       <div className="flex items-baseline justify-between pt-1">
-        <div className="text-3xl font-extrabold text-white tracking-tight">
+        <div className="text-3xl font-extrabold text-text-primary tracking-tight">
           {formattedValue || "$0.00"}
         </div>
 
@@ -44,24 +45,24 @@ export default function StatCard({ label, value, trend }) {
           <div
             className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border ${
               isPositive
-                ? "bg-accent/20 text-accent border-accent/40"
-                : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                ? "bg-positive/10 text-positive border-positive/30"
+                : "bg-negative/10 text-negative border-negative/30"
             }`}
           >
             {isPositive ? (
-              <ArrowUpRight className="w-3.5 h-3.5 text-accent" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-positive" />
             ) : (
-              <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" />
+              <ArrowDownRight className="w-3.5 h-3.5 text-negative" />
             )}
             <span>{Math.abs(trend)}%</span>
           </div>
         )}
       </div>
 
-      <div className="text-[12px] text-slate-400 font-medium flex items-center justify-between pt-2 border-t border-white/5">
+      <div className="text-[12px] text-text-muted font-medium flex items-center justify-between pt-2 border-t border-border">
         <span>Compared to last {timeframe.toLowerCase()}</span>
         <span className="font-semibold text-accent">Updated live</span>
       </div>
-    </div>
+    </GlassCard>
   );
 }

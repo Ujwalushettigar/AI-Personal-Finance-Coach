@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import GlassCard from '../common/GlassCard';
 
 const INCOME_CATEGORIES = ['Salary', 'Freelance', 'Other Income'];
 const EXPENSE_CATEGORIES = [
@@ -141,54 +142,16 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
   const isIncome = type === 'income';
 
   return (
-    <div
-      style={{
-        background: 'rgba(17, 24, 39, 0.75)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '20px',
-        padding: '24px 28px',
-        boxShadow: isIncome
-          ? '0 20px 40px -15px rgba(16, 185, 129, 0.15), 0 0 0 1px rgba(16, 185, 129, 0.2)'
-          : '0 20px 40px -15px rgba(99, 102, 241, 0.18), 0 0 0 1px rgba(99, 102, 241, 0.2)',
-        marginBottom: '32px',
-        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}
-    >
-      {/* Subtle background glow */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '-60px',
-          right: '-60px',
-          width: '180px',
-          height: '180px',
-          borderRadius: '50%',
-          background: isIncome ? 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
-          filter: 'blur(30px)',
-          pointerEvents: 'none'
-        }}
-      />
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <GlassCard className="mb-8 relative overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+        <div className="flex items-center gap-3">
           <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: isIncome
-                ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.15))'
-                : 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(79, 70, 229, 0.15))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isIncome ? '#34d399' : '#818cf8',
-              border: isIncome ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)'
-            }}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+              isIncome
+                ? 'bg-positive/10 border-positive/30 text-positive'
+                : 'bg-accent/10 border-accent/30 text-accent'
+            }`}
           >
             {initialData ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -197,43 +160,25 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
             )}
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#f8fafc', letterSpacing: '-0.02em' }}>
+            <h3 className="text-lg font-bold text-text-primary">
               {initialData ? 'Modify Transaction' : 'Record Transaction'}
             </h3>
-            <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
+            <p className="text-xs text-text-muted">
               {initialData ? 'Update transaction details below' : 'Smart categorization with real-time feedback'}
             </p>
           </div>
         </div>
 
-        {/* Expense vs Income Animated Pill Toggle */}
-        <div
-          style={{
-            display: 'flex',
-            background: 'rgba(15, 23, 42, 0.8)',
-            padding: '4px',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.08)'
-          }}
-        >
+        {/* Expense vs Income Toggle */}
+        <div className="flex bg-white/5 p-1 rounded-xl border border-border">
           <button
             type="button"
             onClick={() => handleTypeChange('expense')}
-            style={{
-              padding: '7px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: !isIncome ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'transparent',
-              color: !isIncome ? '#ffffff' : '#94a3b8',
-              fontSize: '13px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-              boxShadow: !isIncome ? '0 4px 12px rgba(239, 68, 68, 0.35)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              !isIncome
+                ? 'bg-negative text-white font-bold shadow-md'
+                : 'text-text-muted hover:text-text-primary'
+            }`}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="7" y1="7" x2="17" y2="17"/><polyline points="17 7 17 17 7 17"/></svg>
             Expense
@@ -241,21 +186,11 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
           <button
             type="button"
             onClick={() => handleTypeChange('income')}
-            style={{
-              padding: '7px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: isIncome ? 'linear-gradient(135deg, #10b981, #059669)' : 'transparent',
-              color: isIncome ? '#ffffff' : '#94a3b8',
-              fontSize: '13px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-              boxShadow: isIncome ? '0 4px 12px rgba(16, 185, 129, 0.35)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              isIncome
+                ? 'bg-positive text-[#0A0E1A] font-bold shadow-md'
+                : 'text-text-muted hover:text-text-primary'
+            }`}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
             Income
@@ -264,34 +199,21 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
       </div>
 
       {errorMsg && (
-        <div
-          style={{
-            background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#fca5a5',
-            padding: '10px 14px',
-            borderRadius: '10px',
-            fontSize: '13px',
-            marginBottom: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
+        <div className="bg-negative/10 border border-negative/30 text-negative px-4 py-2.5 rounded-xl text-xs mb-4 flex items-center gap-2">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           {errorMsg}
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {/* Amount Field */}
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wider">
               Amount (₹) *
             </label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: isIncome ? '#34d399' : '#818cf8', fontWeight: '700', fontSize: '16px' }}>
+            <div className="relative">
+              <span className={`absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-base ${isIncome ? 'text-positive' : 'text-accent'}`}>
                 ₹
               </span>
               <input
@@ -302,26 +224,14 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
-                style={{
-                  width: '100%',
-                  padding: '12px 14px 12px 34px',
-                  borderRadius: '12px',
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: '#f8fafc',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
-                }}
+                className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary text-sm font-semibold outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
 
           {/* Date Field */}
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wider">
               Date *
             </label>
             <input
@@ -329,25 +239,15 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                borderRadius: '12px',
-                background: 'rgba(15, 23, 42, 0.6)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#f8fafc',
-                fontSize: '14px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
+              className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary text-sm outline-none focus:border-accent transition-colors"
             />
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {/* Description Field */}
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wider">
               Description *
             </label>
             <input
@@ -356,23 +256,13 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                borderRadius: '12px',
-                background: 'rgba(15, 23, 42, 0.6)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#f8fafc',
-                fontSize: '14px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
+              className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary text-sm outline-none focus:border-accent transition-colors placeholder-slate-500"
             />
           </div>
 
           {/* Merchant Field */}
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wider">
               Merchant / Payee (Optional)
             </label>
             <input
@@ -380,35 +270,25 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
               placeholder="e.g. Swiggy, Amazon, Uber, Employer"
               value={merchant}
               onChange={(e) => setMerchant(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                borderRadius: '12px',
-                background: 'rgba(15, 23, 42, 0.6)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#f8fafc',
-                fontSize: '14px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
+              className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary text-sm outline-none focus:border-accent transition-colors placeholder-slate-500"
             />
           </div>
         </div>
 
-        {/* Category Field with Auto-Suggestion badge */}
-        <div style={{ marginBottom: '22px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <label style={{ fontSize: '12px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {/* Category Field */}
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">
               Category
             </label>
             {suggestedCategory && !isManualOverride && (
-              <span style={{ fontSize: '12px', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="text-xs text-accent flex items-center gap-1">
                 <span>✨ Auto-suggested:</span>
-                <strong style={{ color: '#c7d2fe' }}>{suggestedCategory}</strong>
+                <strong className="text-text-primary">{suggestedCategory}</strong>
               </span>
             )}
             {isManualOverride && (
-              <span style={{ fontSize: '12px', color: '#38bdf8' }}>
+              <span className="text-xs text-accent-2">
                 ✓ Manual Override Selected
               </span>
             )}
@@ -416,23 +296,13 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
           <select
             value={category}
             onChange={handleCategoryChange}
-            style={{
-              width: '100%',
-              padding: '12px 14px',
-              borderRadius: '12px',
-              background: 'rgba(15, 23, 42, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#f8fafc',
-              fontSize: '14px',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
+            className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-border text-text-primary text-sm outline-none focus:border-accent transition-colors"
           >
-            <option value="" style={{ background: '#0f172a', color: '#94a3b8' }}>
+            <option value="" className="bg-[#0A0E1A] text-text-muted">
               -- Automatic Categorization --
             </option>
             {categories.map((c) => (
-              <option key={c} value={c} style={{ background: '#0f172a', color: '#f8fafc' }}>
+              <option key={c} value={c} className="bg-[#0A0E1A] text-text-primary">
                 {c}
               </option>
             ))}
@@ -440,23 +310,13 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <div className="flex justify-end gap-3">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
               disabled={isSubmitting}
-              style={{
-                padding: '11px 20px',
-                borderRadius: '12px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                background: 'rgba(255, 255, 255, 0.05)',
-                color: '#94a3b8',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
+              className="px-5 py-2.5 rounded-xl border border-border bg-white/5 text-text-muted hover:text-text-primary text-sm font-semibold transition-colors"
             >
               Cancel
             </button>
@@ -464,26 +324,11 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
           <button
             type="submit"
             disabled={isSubmitting}
-            style={{
-              padding: '12px 28px',
-              borderRadius: '12px',
-              border: 'none',
-              background: isIncome
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #3b82f6 100%)',
-              color: '#ffffff',
-              fontSize: '14px',
-              fontWeight: '700',
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              opacity: isSubmitting ? 0.7 : 1,
-              boxShadow: isIncome
-                ? '0 8px 24px -6px rgba(16, 185, 129, 0.5)'
-                : '0 8px 24px -6px rgba(99, 102, 241, 0.5)',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
+            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg ${
+              isIncome
+                ? 'bg-positive text-[#0A0E1A] hover:bg-positive/90'
+                : 'bg-accent text-[#0A0E1A] hover:bg-accent/90'
+            } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
             {isSubmitting ? (
               <span>Saving...</span>
@@ -501,6 +346,6 @@ export default function TransactionForm({ onSubmit, initialData = null, onCancel
           </button>
         </div>
       </form>
-    </div>
+    </GlassCard>
   );
 }

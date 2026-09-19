@@ -1,11 +1,8 @@
 'use client';
 
 import React from 'react';
+import GlassCard from '../common/GlassCard';
 
-/**
- * Savings Goal Card Component
- * Displays savings target, saved amount, remaining, progress %, and monthly required contribution
- */
 export default function GoalCard({ goal, onEdit, onDelete, onAddFunds }) {
   const { 
     id, 
@@ -22,62 +19,62 @@ export default function GoalCard({ goal, onEdit, onDelete, onAddFunds }) {
   const isCompleted = progressPercentage >= 100;
 
   return (
-    <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 shadow-lg hover:shadow-xl transition-all duration-200 flex flex-col justify-between backdrop-blur-md">
+    <GlassCard className="p-5 flex flex-col justify-between">
       <div>
         {/* Category & Status */}
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-full">
+          <span className="text-xs font-semibold uppercase tracking-wider text-accent bg-accent/10 border border-accent/20 px-2.5 py-0.5 rounded-full">
             {category || 'General'}
           </span>
           {isCompleted ? (
-            <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-positive bg-positive/10 border border-positive/20 px-2.5 py-0.5 rounded-full">
               ✨ Achieved
             </span>
           ) : targetDate ? (
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-text-muted">
               Target: {new Date(targetDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
             </span>
           ) : null}
         </div>
 
         {/* Title */}
-        <h3 className="font-semibold text-lg text-slate-100 mb-2">{title}</h3>
+        <h3 className="font-bold text-lg text-text-primary mb-2">{title}</h3>
 
         {/* Amount Progress */}
         <div className="flex items-baseline justify-between mb-2">
-          <span className="text-2xl font-bold text-white">${currentAmount.toLocaleString()}</span>
-          <span className="text-sm text-slate-400">Target: ${targetAmount.toLocaleString()}</span>
+          <span className="text-2xl font-bold text-text-primary">₹{currentAmount.toLocaleString()}</span>
+          <span className="text-sm text-text-muted">Target: ₹{targetAmount.toLocaleString()}</span>
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden mb-3">
+        <div className="w-full bg-white/5 h-2.5 rounded-full overflow-hidden mb-3">
           <div 
-            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-500" 
+            className="h-full bg-gradient-to-r from-accent to-positive transition-all duration-500" 
             style={{ width: `${Math.min(100, progressPercentage)}%` }}
           />
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-slate-950/50 border border-slate-800/60 mb-4 text-xs">
+        <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-white/5 border border-border mb-4 text-xs">
           <div>
-            <div className="text-slate-500">Remaining</div>
-            <div className="font-semibold text-slate-200">${remainingAmount.toLocaleString()}</div>
+            <div className="text-text-muted">Remaining</div>
+            <div className="font-semibold text-text-primary">₹{remainingAmount.toLocaleString()}</div>
           </div>
           <div>
-            <div className="text-slate-500">Monthly Req.</div>
-            <div className="font-semibold text-indigo-300">
-              {requiredMonthlyContribution > 0 ? `$${requiredMonthlyContribution}/mo` : 'N/A'}
+            <div className="text-text-muted">Monthly Req.</div>
+            <div className="font-semibold text-accent">
+              {requiredMonthlyContribution > 0 ? `₹${requiredMonthlyContribution}/mo` : 'N/A'}
             </div>
           </div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 text-xs">
+      <div className="flex items-center justify-between pt-3 border-t border-border text-xs">
         <button
           onClick={() => onAddFunds(goal)}
           disabled={isCompleted}
-          className="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 font-medium transition disabled:opacity-40 disabled:pointer-events-none"
+          className="px-3 py-1.5 rounded-lg bg-positive/10 hover:bg-positive/20 text-positive font-medium transition disabled:opacity-40 disabled:pointer-events-none border border-positive/20"
         >
           + Add Funds
         </button>
@@ -85,18 +82,19 @@ export default function GoalCard({ goal, onEdit, onDelete, onAddFunds }) {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => onEdit(goal)}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition"
+            className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-text-muted hover:text-text-primary font-medium transition border border-border"
           >
             Edit
           </button>
           <button 
             onClick={() => onDelete(id)}
-            className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-medium transition"
+            className="px-3 py-1.5 rounded-lg bg-negative/10 hover:bg-negative/20 text-negative font-medium transition border border-negative/20"
           >
             Delete
           </button>
         </div>
       </div>
-    </div>
+    </GlassCard>
   );
 }
+

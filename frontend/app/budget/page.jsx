@@ -189,28 +189,28 @@ export default function BudgetPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0b10] text-slate-100 p-4 sm:p-8 space-y-8 font-sans antialiased">
+    <div className="min-h-screen bg-bg text-text-primary p-4 sm:p-8 space-y-8 font-sans antialiased">
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Top Control Bar: Title & Tab Switcher */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/[0.06] pb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-5">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-3xl font-bold text-text-primary tracking-tight">
               Financial Control Center
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-text-muted mt-1">
               Deterministic health scoring & category budget tracking
             </p>
           </div>
 
           {/* Fintech View Toggle Switcher */}
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-[#12131b] border border-white/[0.08] text-xs font-semibold self-start sm:self-auto">
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/5 border border-border text-xs font-semibold self-start sm:self-auto">
             <button
               onClick={() => setActiveTab('BUDGETS')}
               className={`px-4 py-2 rounded-xl transition-all ${
                 activeTab === 'BUDGETS'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_16px_rgba(37,99,235,0.4)] font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-accent text-[#0A0E1A] font-bold shadow-sm'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               Category Budgets
@@ -220,13 +220,13 @@ export default function BudgetPage() {
               onClick={() => setActiveTab('HEALTH_SCORE')}
               className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
                 activeTab === 'HEALTH_SCORE'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_16px_rgba(37,99,235,0.4)] font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-accent text-[#0A0E1A] font-bold shadow-sm'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               <span>Health Score</span>
               {healthScoreData && (
-                <span className="px-1.5 py-0.2 rounded-full bg-white/[0.1] text-[10px] text-blue-300">
+                <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-[10px]">
                   {healthScoreData.score}
                 </span>
               )}
@@ -250,16 +250,16 @@ export default function BudgetPage() {
 
             {/* Error State Banner */}
             {budgetError && (
-              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 flex items-center justify-between gap-4">
+              <div className="p-4 rounded-2xl bg-negative/10 border border-negative/20 text-negative flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm">
-                  <svg className="w-5 h-5 text-rose-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   <span>{budgetError}</span>
                 </div>
                 <button
                   onClick={fetchBudgets}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition"
+                  className="px-3.5 py-1.5 rounded-xl bg-negative text-white text-xs font-semibold transition"
                 >
                   Try Again
                 </button>
@@ -269,22 +269,22 @@ export default function BudgetPage() {
             {/* 2. Category Budgets Header & Filter Pills */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
               <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">Category Budgets</h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <h2 className="text-xl font-bold text-text-primary tracking-tight">Category Budgets</h2>
+                <p className="text-xs text-text-muted mt-0.5">
                   Live spending tracking across defined expense caps
                 </p>
               </div>
 
               {/* Status Filter Tabs */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#12131b] border border-white/[0.06] text-xs font-medium self-start sm:self-auto overflow-x-auto max-w-full">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-border text-xs font-medium self-start sm:self-auto overflow-x-auto max-w-full">
                 {['ALL', 'NORMAL', 'WARNING', 'CRITICAL', 'EXCEEDED'].map((st) => (
                   <button
                     key={st}
                     onClick={() => setFilterStatus(st)}
                     className={`px-3 py-1.5 rounded-lg transition-all text-xs ${
                       filterStatus === st
-                        ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(37,99,235,0.4)]'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                        ? 'bg-accent text-[#0A0E1A] font-semibold'
+                        : 'text-text-muted hover:text-text-primary hover:bg-white/5'
                     }`}
                   >
                     {st}
@@ -297,16 +297,16 @@ export default function BudgetPage() {
             {loadingBudgets ? (
               <BudgetSkeleton />
             ) : filteredBudgets.length === 0 ? (
-              <div className="py-16 px-6 text-center rounded-3xl bg-[#12131b] border border-white/[0.06] flex flex-col items-center justify-center max-w-lg mx-auto">
-                <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+              <div className="py-16 px-6 text-center rounded-3xl bg-surface border border-border flex flex-col items-center justify-center max-w-lg mx-auto">
+                <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mb-4">
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-1">
+                <h3 className="text-lg font-bold text-text-primary mb-1">
                   {filterStatus === 'ALL' ? 'No budgets yet' : `No ${filterStatus.toLowerCase()} budgets`}
                 </h3>
-                <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
+                <p className="text-xs text-text-muted max-w-sm mb-6 leading-relaxed">
                   {filterStatus === 'ALL'
                     ? 'Create your first category budget to start tracking your spending.'
                     : `There are currently no categories matching the ${filterStatus} threshold.`}
@@ -317,14 +317,14 @@ export default function BudgetPage() {
                       setEditingBudget(null);
                       setIsFormModalOpen(true);
                     }}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-[0_0_18px_rgba(37,99,235,0.4)] transition"
+                    className="px-5 py-2.5 rounded-xl bg-accent text-[#0A0E1A] text-xs font-bold shadow-md transition"
                   >
                     + Create Budget
                   </button>
                 ) : (
                   <button
                     onClick={() => setFilterStatus('ALL')}
-                    className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-medium transition"
+                    className="px-4 py-2 rounded-xl bg-white/5 border border-border text-text-primary text-xs font-medium transition"
                   >
                     Clear Filter
                   </button>

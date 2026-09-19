@@ -18,9 +18,9 @@ export default function VantaGlobeBackground({ children }) {
             el: vantaRef.current,
             THREE: THREE,
             backgroundAlpha: 1,
-            backgroundColor: 0x070b16,
-            color: 0xfc0850,
-            color2: 0xff7a0e,
+            backgroundColor: 0x0A0E1A,
+            color: 0x39FF88,
+            color2: 0x22D3EE,
             gyroControls: false,
             maxDistance: 22,
             minHeight: 200,
@@ -49,7 +49,7 @@ export default function VantaGlobeBackground({ children }) {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#070b16]">
+    <div className="relative min-h-screen w-full overflow-hidden bg-bg">
       <div ref={vantaRef} className="fixed inset-0 z-0 pointer-events-none" />
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         {children}
