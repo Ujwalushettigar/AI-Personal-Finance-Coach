@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/Ujwalushettigar/AI-Personal-Finance-Coach/issues"
   },
-  "homepage": "https://github.com/Ujwalushettigar/AI-Personal-Finance-Coach#readme"
+  "homepage": "https://github.com/Ujwalushettigar/AI-Personal-Finance-Coach#readme",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.3"
+  }
 }
