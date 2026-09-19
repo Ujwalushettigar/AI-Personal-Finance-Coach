@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { detectSubscriptions, getSubscriptions } from '../../services/api/subscriptions';
+import { detectSubscriptions, getSubscriptions, addSubscription } from '../../services/api/subscriptions';
 import { Card, BadgePill, Tile, IconTile, PrimaryButton } from '../../components/budget-goals/ThemeCard';
 import SubscriptionCard from '../../components/subscriptions/SubscriptionCard';
 import LeakCard from '../../components/subscriptions/LeakCard';
@@ -66,15 +66,43 @@ export default function SubscriptionsPage() {
 	const [data, setData] = useState(fallbackData);
 	const [loading, setLoading] = useState(true);
 	const [usingDemo, setUsingDemo] = useState(false);
+	const [error, setError] = useState('');
 	const [rarelyUsedIds, setRarelyUsedIds] = useState([]);
 	const [reviewing, setReviewing] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState('');
+	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+	const [newSubForm, setNewSubForm] = useState({ merchant: '', cadence: 'monthly', amount: '' });
+	const [isAdding, setIsAdding] = useState(false);
+	const [addError, setAddError] = useState('');
+
+	async function handleAddSubscription(e) {
+		e.preventDefault();
+		if (!newSubForm.merchant || !newSubForm.amount) return;
+		setIsAdding(true);
+		setAddError('');
+		try {
+			await addSubscription(newSubForm);
+			const result = await getSubscriptions();
+			setData({ ...fallbackData, ...result });
+			setIsAddModalOpen(false);
+			setNewSubForm({ merchant: '', cadence: 'monthly', amount: '' });
+		} catch (err) {
+			setAddError(err.message || 'Failed to add subscription');
+		} finally {
+			setIsAdding(false);
+		}
+	}
 
 	useEffect(() => {
 		getSubscriptions().then((result) => {
 			setData({ ...fallbackData, ...result });
-		}).catch(() => setUsingDemo(true)).finally(() => setLoading(false));
+		}).catch((requestError) => {
+			setUsingDemo(true);
+			setError(requestError.message || 'Unable to load subscription data.');
+		}).finally(() => setLoading(false));
 	}, []);
+
+
 
 	const summary = data.summary || {};
 	const recurring = data.recurringExpenses || data.subscriptions || [];
@@ -95,10 +123,7 @@ export default function SubscriptionsPage() {
 			setData((current) => ({ ...current, ...result }));
 			setReviewMessage(`${rarelyUsedIds.length} subscription${rarelyUsedIds.length === 1 ? '' : 's'} added to your leak review.`);
 		} catch (error) {
-			const selected = subscriptions.filter((item) => rarelyUsedIds.includes(item.id));
-			const selectedLeaks = selected.map((item) => ({ id: `user-${item.id}`, subscriptionId: item.id, merchant: item.merchant, monthlyCost: item.monthlyCost, potentialMonthlySavings: item.monthlyCost, severity: 'high', confidence: item.confidence, reasons: ['You marked it as rarely used'] }));
-			setData((current) => ({ ...current, leaks: [...selectedLeaks, ...(current.leaks || []).filter((leak) => !rarelyUsedIds.includes(leak.subscriptionId))] }));
-			setReviewMessage('Your selections were added to the leak review.');
+			setReviewMessage(error.message || 'Unable to update the live leak analysis.');
 		} finally {
 			setReviewing(false);
 		}

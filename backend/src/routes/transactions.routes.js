@@ -9,6 +9,9 @@ const express = require('express');
 const router = express.Router();
 
 const transactionController = require('../controllers/transactionController');
+const { verifyAuth } = require('../middleware/auth.middleware');
+
+router.use(verifyAuth);
 
 // Transaction CRUD Endpoints
 router.post('/', transactionController.createTransaction);

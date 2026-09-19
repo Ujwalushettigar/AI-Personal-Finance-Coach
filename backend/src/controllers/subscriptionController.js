@@ -3,72 +3,81 @@ const {
 	summarizeSubscriptions,
 } = require('../services/recurringDetection');
 const { detectPotentialLeaks } = require('../services/subscriptionLeakDetector');
+const { getSupabaseClient } = require('../config/db');
+const { SubscriptionModel } = require('../models/Subscription');
 
-const DEMO_TRANSACTIONS = [
-	{ merchant: 'StreamFlix', amount: 15.99, date: '2026-05-05' },
-	{ merchant: 'StreamFlix', amount: 15.99, date: '2026-06-05' },
-	{ merchant: 'StreamFlix', amount: 15.99, date: '2026-07-05' },
-	{ merchant: 'StreamFlix', amount: 15.99, date: '2026-08-05' },
-	{ merchant: 'CloudBox Pro', amount: 49.99, date: '2026-05-12' },
-	{ merchant: 'CloudBox Pro', amount: 49.99, date: '2026-06-12' },
-	{ merchant: 'CloudBox Pro', amount: 49.99, date: '2026-07-12' },
-	{ merchant: 'CloudBox Pro', amount: 49.99, date: '2026-08-12' },
-	{ merchant: 'Fit Studio', amount: 29, date: '2026-05-01' },
-	{ merchant: 'Fit Studio', amount: 29, date: '2026-06-01' },
-	{ merchant: 'Fit Studio', amount: 31, date: '2026-07-01' },
-	{ merchant: 'Fit Studio', amount: 29, date: '2026-08-01' },
-	{ merchant: 'Design Annual', amount: 199, date: '2025-08-20' },
-	{ merchant: 'Design Annual', amount: 199, date: '2026-08-20' },
-	{ merchant: 'Grocery Market', amount: 72, date: '2026-08-18' },
-];
-
-function transactionsFromRequest(req) {
-	if (Array.isArray(req.body?.transactions)) return req.body.transactions;
-	if (Array.isArray(req.app?.locals?.transactions)) return req.app.locals.transactions;
-	if (req.query?.transactions) {
-		try {
-			const parsed = JSON.parse(req.query.transactions);
-			if (Array.isArray(parsed)) return parsed;
-		} catch (error) {
-			// Ignore malformed optional query data and use the configured source.
-		}
+async function transactionsForUser(req) {
+	const userId = req.user?.sub || req.user?.id;
+	if (!userId) {
+		const error = new Error('Authenticated user ID is missing from the access token.');
+		error.statusCode = 401;
+		throw error;
 	}
-	return DEMO_TRANSACTIONS;
+
+	const { data, error } = await getSupabaseClient(req.authToken).from('transactions')
+		.select('*')
+		.eq('user_id', userId)
+		.order('date', { ascending: true });
+
+	if (error) throw error;
+	return data || [];
 }
 
-function analyze(req) {
-	const recurringExpenses = detectRecurringExpenses(transactionsFromRequest(req));
-	const subscriptions = recurringExpenses.filter((item) => item.likelySubscription);
+async function analyze(req) {
+	const userId = req.user?.sub || req.user?.id;
+	const recurringExpenses = detectRecurringExpenses(await transactionsForUser(req));
+	
+	// Auto-detected subscriptions
+	const autoSubscriptions = recurringExpenses.filter((item) => item.likelySubscription);
+	
+	// Fetch manually added subscriptions from DB
+	let dbSubscriptions = [];
+	try {
+		if (userId) {
+			dbSubscriptions = await SubscriptionModel.getUserSubscriptions(userId, req.authToken);
+		}
+	} catch (err) {
+		console.error("Failed to fetch DB subscriptions:", err);
+	}
+
+	// Merge subscriptions, prioritizing DB (manual) ones
+	const dbMerchants = new Set(dbSubscriptions.map(s => s.merchant.toLowerCase()));
+	const mergedSubscriptions = [
+		...dbSubscriptions,
+		...autoSubscriptions.filter(s => !dbMerchants.has(s.merchant.toLowerCase()))
+	];
+
 	const rarelyUsedIds = Array.isArray(req.body?.rarelyUsedIds) ? req.body.rarelyUsedIds : [];
-	const leaks = detectPotentialLeaks(subscriptions, { rarelyUsedIds });
-	return { recurringExpenses, subscriptions, leaks };
+	const leaks = detectPotentialLeaks(mergedSubscriptions, { rarelyUsedIds });
+	
+	return { recurringExpenses, subscriptions: mergedSubscriptions, leaks };
 }
 
 function sendError(res, error) {
-	return res.status(500).json({ error: 'Unable to analyze subscriptions', details: error.message });
+	return res.status(error.statusCode || 500).json({ error: 'Unable to process subscriptions', details: error.message });
 }
 
-function getSubscriptions(req, res) {
+async function getSubscriptions(req, res) {
 	try {
-		const { recurringExpenses, subscriptions, leaks } = analyze(req);
+		const { recurringExpenses, subscriptions, leaks } = await analyze(req);
 		return res.json({ recurringExpenses, subscriptions, leaks, summary: summarizeSubscriptions(subscriptions) });
 	} catch (error) {
 		return sendError(res, error);
 	}
 }
 
-function getRecurring(req, res) {
+async function getRecurring(req, res) {
 	try {
-		const { recurringExpenses } = analyze(req);
+		const { recurringExpenses } = await analyze(req);
 		return res.json({ recurringExpenses, count: recurringExpenses.length });
 	} catch (error) {
 		return sendError(res, error);
 	}
 }
 
-function getLeaks(req, res) {
+async function getLeaks(req, res) {
 	try {
-		const { leaks } = analyze(req);
+		const { leaks } = await analyze(req);
 		return res.json({
 			leaks,
 			count: leaks.length,
@@ -79,13 +88,56 @@ function getLeaks(req, res) {
 	}
 }
 
-function detect(req, res) {
+async function detect(req, res) {
 	try {
-		const result = analyze(req);
+		const result = await analyze(req);
 		return res.status(200).json({ ...result, summary: summarizeSubscriptions(result.subscriptions) });
 	} catch (error) {
 		return sendError(res, error);
 	}
 }
 
-module.exports = { getSubscriptions, getRecurring, getLeaks, detect };
+async function addSubscription(req, res) {
+	try {
+		const userId = req.user?.sub || req.user?.id;
+		if (!userId) {
+			const error = new Error('Authenticated user ID is missing from the access token.');
+			error.statusCode = 401;
+			throw error;
+		}
+
+		const { merchant, cadence, amount } = req.body;
+		if (!merchant || !cadence || amount === undefined) {
+			const error = new Error('Missing required fields: merchant, cadence, amount');
+			error.statusCode = 400;
+			throw error;
+		}
+
+		// Calculate costs based on cadence
+		const numericAmount = Number(amount);
+		let monthlyCost = 0;
+		let yearlyCost = 0;
+		switch(cadence) {
+			case 'weekly': monthlyCost = numericAmount * 4.33; yearlyCost = numericAmount * 52; break;
+			case 'biweekly': monthlyCost = numericAmount * 2.16; yearlyCost = numericAmount * 26; break;
+			case 'monthly': monthlyCost = numericAmount; yearlyCost = numericAmount * 12; break;
+			case 'quarterly': monthlyCost = numericAmount / 3; yearlyCost = numericAmount * 4; break;
+			case 'yearly': monthlyCost = numericAmount / 12; yearlyCost = numericAmount; break;
+			default: monthlyCost = numericAmount; yearlyCost = numericAmount * 12; break;
+		}
+
+		const newSub = await SubscriptionModel.addSubscription({
+			merchant,
+			cadence,
+			amount: numericAmount,
+			monthlyCost,
+			yearlyCost
+		}, userId, req.authToken);
+
+		return res.status(201).json({ success: true, subscription: newSub });
+	} catch (error) {
+		return sendError(res, error);
+	}
+}
+
+module.exports = { getSubscriptions, getRecurring, getLeaks, detect, addSubscription };

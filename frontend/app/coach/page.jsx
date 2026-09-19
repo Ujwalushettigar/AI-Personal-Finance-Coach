@@ -24,7 +24,7 @@ export default function CoachPage() {
   const [messages, setMessages] = useState([
     {
       role: "coach",
-      text: "Hello! I am your AI Financial Coach. Ask me anything about your budget, transactions, spending patterns, or subscription leaks!",
+      text: "Ask me about your spending, budget, or subscriptions. I’ll keep the answer brief and actionable.",
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
@@ -198,7 +198,8 @@ export default function CoachPage() {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Ask your AI coach a financial question..."
-            className="flex-1 bg-[#070B1E] border border-white/15 rounded-xl px-4 py-3 text-sm text-white placeholder-[#8A93B5]/60 focus:border-[#0A84FF] focus:outline-none focus:ring-1 focus:ring-[#0A84FF] transition-all font-['DM_Sans',sans-serif]"
+                        maxLength={1000}
+            className="flex-1 bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all"
           />
           <button
             type="submit"

@@ -6,6 +6,9 @@
 const express = require('express');
 const router = express.Router();
 const BudgetController = require('../controllers/budgetController');
+const { verifyAuth } = require('../middleware/auth.middleware');
+
+router.use(verifyAuth);
 
 // Financial Health Score route
 router.get('/health-score', BudgetController.getHealthScore);

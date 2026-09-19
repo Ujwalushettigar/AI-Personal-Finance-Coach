@@ -6,15 +6,10 @@
  * Designed to connect to the database client exported by Member D at backend/src/config/db.js.
  */
 
-const crypto = require('crypto');
+const { getSupabaseClient } = require('../config/db');
 
-// Attempt to load database client from backend/src/config/db.js if configured by Member D
-let dbClient = null;
-try {
-  dbClient = require('../config/db');
-} catch (err) {
-  // DB client has not yet been implemented by Member D
-  dbClient = null;
+function client(accessToken) {
+  return getSupabaseClient(accessToken);
 }
 
 class Transaction {
@@ -22,22 +17,13 @@ class Transaction {
    * Set or override the database client (useful for dependency injection or testing)
    * @param {Object} client - Object with a query(text, params) function
    */
-  static setDbClient(client) {
-    dbClient = client;
-  }
+  static setDbClient() {}
 
   /**
    * Retrieve active database client or throw descriptive error
    * @returns {Object} dbClient with query method
    */
-  static getDb() {
-    if (dbClient && typeof dbClient.query === 'function') {
-      return dbClient;
-    }
-    throw new Error(
-      'Database connection not configured. Awaiting Member D to provide database connection in backend/src/config/db.js'
-    );
-  }
+  static getDb(accessToken) { return client(accessToken); }
 
   /**
    * Create a new transaction record
@@ -52,32 +38,20 @@ class Transaction {
    * @param {string} [data.date]
    * @returns {Promise<Object>} Created transaction
    */
-  static async create(data) {
-    const db = Transaction.getDb();
-    const id = data.id || crypto.randomUUID();
+  static async create(data, accessToken) {
     const date = data.date || new Date().toISOString().split('T')[0];
     const merchant = data.merchant || null;
-    const userId = data.user_id || 'default-user';
-
-    const sql = `
-      INSERT INTO transactions (
-        id, user_id, amount, type, category, description, merchant, date, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING *;
-    `;
-    const params = [
-      id,
-      userId,
-      parseFloat(data.amount),
-      data.type.toLowerCase(),
-      data.category,
-      data.description.trim(),
+    const { data: row, error } = await client(accessToken).from('transactions').insert({
+      user_id: data.user_id,
+      amount: parseFloat(data.amount),
+      type: data.type.toLowerCase(),
+      category: data.category,
+      description: data.description.trim(),
       merchant,
-      date
-    ];
-
-    const result = await db.query(sql, params);
-    return result.rows ? result.rows[0] : result[0];
+      date,
+    }).select().single();
+    if (error) throw error;
+    return row;
   }
 
   /**
@@ -93,64 +67,18 @@ class Transaction {
    * @param {number} [filters.offset]
    * @returns {Promise<Array>} List of transactions
    */
-  static async findAll(filters = {}) {
-    const db = Transaction.getDb();
-    const conditions = [];
-    const params = [];
-    let paramIndex = 1;
-
-    if (filters.user_id) {
-      conditions.push(`user_id = $${paramIndex++}`);
-      params.push(filters.user_id);
-    }
-
-    if (filters.type) {
-      conditions.push(`type = $${paramIndex++}`);
-      params.push(filters.type.toLowerCase());
-    }
-
-    if (filters.category) {
-      conditions.push(`LOWER(category) = LOWER($${paramIndex++})`);
-      params.push(filters.category.trim());
-    }
-
-    if (filters.startDate) {
-      conditions.push(`date >= $${paramIndex++}`);
-      params.push(filters.startDate);
-    }
-
-    if (filters.endDate) {
-      conditions.push(`date <= $${paramIndex++}`);
-      params.push(filters.endDate);
-    }
-
-    if (filters.search) {
-      conditions.push(`(
-        LOWER(description) LIKE $${paramIndex} OR
-        LOWER(merchant) LIKE $${paramIndex}
-      )`);
-      params.push(`%${filters.search.trim().toLowerCase()}%`);
-      paramIndex++;
-    }
-
-    let sql = 'SELECT * FROM transactions';
-    if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
-    }
-    sql += ' ORDER BY date DESC, created_at DESC';
-
-    if (filters.limit) {
-      sql += ` LIMIT $${paramIndex++}`;
-      params.push(parseInt(filters.limit, 10));
-    }
-
-    if (filters.offset) {
-      sql += ` OFFSET $${paramIndex++}`;
-      params.push(parseInt(filters.offset, 10));
-    }
-
-    const result = await db.query(sql, params);
-    return result.rows || result || [];
+  static async findAll(filters = {}, accessToken) {
+    let query = client(accessToken).from('transactions').select('*').eq('user_id', filters.user_id).order('date', { ascending: false }).order('created_at', { ascending: false });
+    if (filters.type) query = query.eq('type', filters.type.toLowerCase());
+    if (filters.category) query = query.ilike('category', filters.category.trim());
+    if (filters.startDate) query = query.gte('date', filters.startDate);
+    if (filters.endDate) query = query.lte('date', filters.endDate);
+    if (filters.search) query = query.or(`description.ilike.%${filters.search.trim()}%,merchant.ilike.%${filters.search.trim()}%`);
+    if (filters.limit) query = query.limit(parseInt(filters.limit, 10));
+    if (filters.offset) query = query.range(parseInt(filters.offset, 10), parseInt(filters.offset, 10) + (parseInt(filters.limit, 10) || 1000) - 1);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
   }
 
   /**
@@ -159,19 +87,10 @@ class Transaction {
    * @param {string} [userId]
    * @returns {Promise<Object|null>}
    */
-  static async findById(id, userId = null) {
-    const db = Transaction.getDb();
-    let sql = 'SELECT * FROM transactions WHERE id = $1';
-    const params = [id];
-
-    if (userId) {
-      sql += ' AND user_id = $2';
-      params.push(userId);
-    }
-
-    const result = await db.query(sql, params);
-    const rows = result.rows || result;
-    return rows && rows.length > 0 ? rows[0] : null;
+  static async findById(id, userId, accessToken) {
+    const { data, error } = await client(accessToken).from('transactions').select('*').eq('id', id).eq('user_id', userId).maybeSingle();
+    if (error) throw error;
+    return data;
   }
 
   /**
@@ -181,55 +100,14 @@ class Transaction {
    * @param {Object} updateData 
    * @returns {Promise<Object|null>} Updated transaction
    */
-  static async update(id, userId = null, updateData = {}) {
-    const db = Transaction.getDb();
-    const setClauses = [];
-    const params = [];
-    let paramIndex = 1;
-
-    const allowedFields = ['amount', 'type', 'category', 'description', 'merchant', 'date'];
-    for (const field of allowedFields) {
-      if (updateData[field] !== undefined) {
-        if (field === 'amount') {
-          setClauses.push(`amount = $${paramIndex++}`);
-          params.push(parseFloat(updateData.amount));
-        } else if (field === 'type') {
-          setClauses.push(`type = $${paramIndex++}`);
-          params.push(updateData.type.toLowerCase());
-        } else if (field === 'description') {
-          setClauses.push(`description = $${paramIndex++}`);
-          params.push(updateData.description.trim());
-        } else {
-          setClauses.push(`${field} = $${paramIndex++}`);
-          params.push(updateData[field]);
-        }
-      }
-    }
-
-    if (setClauses.length === 0) {
-      return Transaction.findById(id, userId);
-    }
-
-    setClauses.push('updated_at = CURRENT_TIMESTAMP');
-
-    params.push(id);
-    let whereClause = `WHERE id = $${paramIndex++}`;
-
-    if (userId) {
-      params.push(userId);
-      whereClause += ` AND user_id = $${paramIndex++}`;
-    }
-
-    const sql = `
-      UPDATE transactions
-      SET ${setClauses.join(', ')}
-      ${whereClause}
-      RETURNING *;
-    `;
-
-    const result = await db.query(sql, params);
-    const rows = result.rows || result;
-    return rows && rows.length > 0 ? rows[0] : null;
+  static async update(id, userId, updateData = {}, accessToken) {
+    const payload = { ...updateData };
+    if (payload.amount !== undefined) payload.amount = parseFloat(payload.amount);
+    if (payload.type) payload.type = payload.type.toLowerCase();
+    if (payload.description) payload.description = payload.description.trim();
+    const { data, error } = await client(accessToken).from('transactions').update(payload).eq('id', id).eq('user_id', userId).select().maybeSingle();
+    if (error) throw error;
+    return data;
   }
 
   /**
@@ -238,20 +116,10 @@ class Transaction {
    * @param {string|null} userId 
    * @returns {Promise<Object|null>} Deleted transaction
    */
-  static async delete(id, userId = null) {
-    const db = Transaction.getDb();
-    let sql = 'DELETE FROM transactions WHERE id = $1';
-    const params = [id];
-
-    if (userId) {
-      sql += ' AND user_id = $2';
-      params.push(userId);
-    }
-    sql += ' RETURNING *;';
-
-    const result = await db.query(sql, params);
-    const rows = result.rows || result;
-    return rows && rows.length > 0 ? rows[0] : null;
+  static async delete(id, userId, accessToken) {
+    const { data, error } = await client(accessToken).from('transactions').delete().eq('id', id).eq('user_id', userId).select().maybeSingle();
+    if (error) throw error;
+    return data;
   }
 }
 

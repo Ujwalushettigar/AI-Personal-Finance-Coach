@@ -3,19 +3,22 @@
  * Member C Module: FinPilot
  */
 
-const API_BASE_URL = 
-  process.env.NEXT_PUBLIC_API_URL || 
-  process.env.NEXT_PUBLIC_API_BASE_URL || 
-  'http://localhost:5000/api';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'}/budget`;
 
 /**
  * Generic fetch wrapper with fallback mock handling for standalone development
  */
 async function fetchApi(endpoint, options = {}) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Please sign in to manage your budgets.');
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
         ...options.headers
       },
       ...options
