@@ -6,6 +6,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-share-tech)', 'sans-serif'],
+      },
       colors: {
         bg: '#0A0E1A',
         surface: 'rgba(255,255,255,0.05)',

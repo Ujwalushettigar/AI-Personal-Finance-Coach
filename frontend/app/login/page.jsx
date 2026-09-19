@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
-import VantaGlobeBackground from "../../components/common/VantaGlobeBackground";
 import GlassCard from "../../components/common/GlassCard";
 
 export default function LoginPage() {
@@ -38,7 +37,7 @@ export default function LoginPage() {
   };
 
   return (
-    <VantaGlobeBackground>
+    <div className="min-h-screen flex items-center justify-center p-4">
       <GlassCard className="w-full max-w-md p-8 text-text-primary">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-text-primary">Welcome Back</h1>
@@ -92,6 +91,6 @@ export default function LoginPage() {
           </Link>
         </div>
       </GlassCard>
-    </VantaGlobeBackground>
+    </div>
   );
 }

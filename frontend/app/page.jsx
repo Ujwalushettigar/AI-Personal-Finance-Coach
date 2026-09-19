@@ -3,7 +3,6 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
-import MouseGlowBackground from "../components/landing/MouseGlowBackground";
 import Hero from "../components/landing/Hero";
 import SecurityFeatures from "../components/landing/SecurityFeatures";
 import TrustBar from "../components/landing/TrustBar";
@@ -31,7 +30,7 @@ export default function LandingPage() {
   }
 
   return (
-    <MouseGlowBackground>
+    <>
       <main className="relative">
         <Hero />
         <SecurityFeatures />
@@ -39,7 +38,7 @@ export default function LandingPage() {
       </main>
       
       {/* Footer */}
-      <footer className="py-8 border-t border-border bg-[#070A12] text-xs text-text-muted text-center">
+      <footer className="py-8 border-t border-border bg-[#070A12]/80 backdrop-blur-md text-xs text-text-muted text-center">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>© {new Date().getFullYear()} FinPilot Inc. All rights reserved.</div>
           <div className="flex items-center gap-6">
@@ -49,6 +48,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-    </MouseGlowBackground>
+    </>
   );
 }
