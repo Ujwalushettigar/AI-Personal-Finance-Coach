@@ -57,3 +57,4 @@ export default function VantaGlobeBackground({ children }) {
     </div>
   );
 }
+

@@ -2,8 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { detectSubscriptions, getSubscriptions } from '../../services/api/subscriptions';
-import GlassCard from '../../components/common/GlassCard';
+import { Card, BadgePill, Tile, IconTile, PrimaryButton } from '../../components/budget-goals/ThemeCard';
+import SubscriptionCard from '../../components/subscriptions/SubscriptionCard';
+import LeakCard from '../../components/subscriptions/LeakCard';
+import SubscriptionSkeleton from '../../components/subscriptions/SubscriptionSkeleton';
 
+/* ─────────────────────────────────────────────────────────
+   Fallback data — identical to original, zero logic changes
+   ───────────────────────────────────────────────────────── */
 const fallbackData = {
 	summary: { totalSubscriptions: 4, monthlyCost: 110.15, yearlyCost: 1321.8 },
 	subscriptions: [
@@ -24,24 +30,38 @@ const fallbackData = {
 	],
 };
 
+/* ─────────────────────────────────────────────────────────
+   Helpers — identical to original
+   ───────────────────────────────────────────────────────── */
 const money = (value) => `$${Number(value || 0).toFixed(2)}`;
 const dateLabel = (value) => value ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not available';
 
-function MetricCard({ label, value, detail, accent = '#39FF88' }) {
+/* ─────────────────────────────────────────────────────────
+   Confidence Badge (local sub-component)
+   ───────────────────────────────────────────────────────── */
+function ConfidenceBadge({ value }) {
+	const isHigh = value >= 80;
+	const isMedium = value >= 60 && value < 80;
+
+	const badgeClass = isHigh
+		? 'text-[#22D36A] bg-[#22D36A]/[0.12] border-[#22D36A]/30'
+		: isMedium
+			? 'text-[#F5A524] bg-[#F5A524]/[0.12] border-[#F5A524]/30'
+			: 'text-[#FF4D6A] bg-[#FF4D6A]/[0.12] border-[#FF4D6A]/30';
+
+	const label = isHigh ? 'High' : isMedium ? 'Medium' : 'Low';
+
 	return (
-		<GlassCard className="p-5 border-t-2" style={{ borderTopColor: accent }}>
-			<span className="block text-text-muted text-xs font-semibold mb-2">{label}</span>
-			<strong className="block text-2xl font-extrabold text-text-primary tracking-tight mb-1">{value}</strong>
-			<span className="text-text-muted text-xs">{detail}</span>
-		</GlassCard>
+		<span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeClass}`}>
+			{label} · {value}%
+		</span>
 	);
 }
 
-function Confidence({ value }) {
-	const colorClass = value >= 80 ? 'bg-positive/10 text-positive border-positive/30' : value >= 60 ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-negative/10 text-negative border-negative/30';
-	return <span className={`inline-block border rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${colorClass}`}>{value}% confidence</span>;
-}
-
+/* ═════════════════════════════════════════════════════════
+   MAIN PAGE COMPONENT
+   All state, effects, handlers, API calls IDENTICAL to original
+   ═════════════════════════════════════════════════════════ */
 export default function SubscriptionsPage() {
 	const [data, setData] = useState(fallbackData);
 	const [loading, setLoading] = useState(true);
@@ -84,190 +104,365 @@ export default function SubscriptionsPage() {
 		}
 	}
 
+	/* ───────────────────────────────────────────────────────
+	   RENDER — CryptoVault Dark Fintech Theme
+	   ─────────────────────────────────────────────────────── */
 	return (
-		<main className="min-h-screen bg-bg text-text-primary p-4 sm:p-6 md:p-8 space-y-6">
-			<div className="max-w-7xl mx-auto space-y-6">
-				{/* Page Header */}
-				<GlassCard className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+		<div className="min-h-screen bg-[#0A0E27] text-white p-4 sm:p-8 space-y-10 antialiased">
+			<div className="max-w-[1216px] mx-auto space-y-10">
+
+				{/* ═══════════════════════════════════════════════════
+				    HEADER: Badge Pill + Section Heading + Status
+				    ═══════════════════════════════════════════════════ */}
+				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-white/[0.06] pb-6">
 					<div>
-						<div className="text-xs font-extrabold uppercase tracking-wider text-accent bg-accent/10 px-2.5 py-0.5 rounded-full border border-accent/30 inline-block mb-2">
-							FINPILOT / SPENDING INTELLIGENCE
-						</div>
-						<h1 className="text-3xl font-bold text-text-primary tracking-tight">Subscriptions</h1>
-						<p className="text-sm text-text-muted mt-1">See every recurring payment, what it costs, and where your money may be quietly leaking.</p>
-					</div>
-					<div className="text-xs text-text-muted flex items-center gap-2 font-medium shrink-0">
-						<span>{loading ? 'Analyzing transactions…' : usingDemo ? 'Demo insights · API offline' : 'Live transaction analysis'}</span>
-						<span className={`w-2.5 h-2.5 rounded-full ${usingDemo ? 'bg-amber-400' : 'bg-positive'}`} />
-					</div>
-				</GlassCard>
-
-				{/* Metrics Row */}
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-					<MetricCard label="Detected subscriptions" value={summary.totalSubscriptions ?? subscriptions.length} detail="Recurring merchants" accent="#39FF88" />
-					<MetricCard label="Monthly commitment" value={money(summary.monthlyCost)} detail="Average monthly spend" accent="#22D3EE" />
-					<MetricCard label="Yearly commitment" value={money(summary.yearlyCost)} detail="Projected annual cost" accent="#F5F7FA" />
-					<MetricCard label="Potential monthly leaks" value={money(savings)} detail={`${leaks.length} item${leaks.length === 1 ? '' : 's'} worth reviewing`} accent="#FF5C7A" />
-				</div>
-
-				{/* Rarely Used Review Panel */}
-				<GlassCard className="space-y-4">
-					<div className="flex items-start gap-3">
-						<div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/40 text-accent flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">?</div>
-						<div>
-							<h2 className="text-lg font-bold text-text-primary">Which subscriptions do you rarely use?</h2>
-							<p className="text-xs text-text-muted">Select anything you do not use often. We will flag it as a potential money leak for review.</p>
-						</div>
-					</div>
-					<div className="flex flex-wrap gap-3 pt-2">
-						{subscriptions.map((subscription) => (
-							<label
-								key={subscription.id}
-								className={`flex items-center gap-2.5 px-3.5 py-2 rounded-xl border transition-all cursor-pointer text-xs ${
-									rarelyUsedIds.includes(subscription.id)
-										? 'bg-accent/15 border-accent text-accent font-semibold'
-										: 'bg-white/5 border-border text-text-primary hover:border-white/20'
-								}`}
-							>
-								<input
-									type="checkbox"
-									checked={rarelyUsedIds.includes(subscription.id)}
-									onChange={() => toggleRarelyUsed(subscription.id)}
-									className="accent-accent w-4 h-4 rounded"
-								/>
-								<span className="font-semibold">{subscription.merchant}</span>
-								<span className="text-text-muted">{money(subscription.monthlyCost)}/mo</span>
-							</label>
-						))}
-					</div>
-					<div className="flex items-center gap-4 pt-2 flex-wrap">
-						<button
-							type="button"
-							onClick={reviewRarelyUsed}
-							disabled={!rarelyUsedIds.length || reviewing}
-							className="px-4 py-2 rounded-xl bg-accent text-[#0A0E1A] font-bold text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-accent/90"
-						>
-							{reviewing ? 'Reviewing…' : `Review selected${rarelyUsedIds.length ? ` (${rarelyUsedIds.length})` : ''}`}
-						</button>
-						{reviewMessage && <span className="text-xs font-semibold text-positive">{reviewMessage}</span>}
-					</div>
-				</GlassCard>
-
-				{/* Content Grid */}
-				<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-					{/* Subscriptions List Panel */}
-					<GlassCard className="lg:col-span-7 space-y-4">
-						<div className="flex items-center justify-between">
-							<div>
-								<h2 className="text-lg font-bold text-text-primary">Your subscriptions</h2>
-								<p className="text-xs text-text-muted">Recurring payments with a predictable cadence</p>
-							</div>
-							<span className="px-2.5 py-1 rounded-lg bg-accent/10 border border-accent/30 text-accent font-bold text-xs">
-								{subscriptions.length}
+						<BadgePill icon="🔍" text="Spending Intelligence" className="mb-3" />
+						<h1 className="text-3xl sm:text-4xl md:text-[44px] font-bold text-white tracking-tight leading-[1.15]">
+							Subscription{' '}
+							<span className="bg-gradient-to-r from-[#0A84FF] via-[#22D36A] to-[#39FF14] bg-clip-text text-transparent">
+								Intelligence
 							</span>
-						</div>
-						<div className="divide-y divide-border pt-2">
-							{subscriptions.map((subscription) => (
-								<article key={subscription.id} className="py-3.5 flex items-center justify-between gap-4">
-									<div className="flex items-center gap-3 min-w-0 flex-1">
-										<div className="w-9 h-9 rounded-xl bg-accent text-[#0A0E1A] font-extrabold text-xs flex items-center justify-center shrink-0">
-											{subscription.merchant.slice(0, 1).toUpperCase()}
-										</div>
-										<div className="min-w-0 flex-1">
-											<div className="font-bold text-sm text-text-primary truncate">{subscription.merchant}</div>
-											<div className="text-xs text-text-muted truncate">
-												{subscription.cadence} · {money(subscription.amount)} per cycle · next {dateLabel(subscription.nextExpectedPayment)}
-											</div>
-											<div className="w-full max-w-[180px] bg-white/10 h-1.5 rounded-full overflow-hidden mt-1.5">
-												<div className="h-full bg-accent rounded-full transition-all" style={{ width: `${Math.min(100, subscription.confidence)}%` }} />
-											</div>
-										</div>
-									</div>
-									<div className="text-right flex flex-col items-end gap-1 shrink-0">
-										<strong className="text-sm font-bold text-text-primary">{money(subscription.monthlyCost)}</strong>
-										<span className="text-[10px] text-text-muted">per month</span>
-										<Confidence value={subscription.confidence} />
-									</div>
-								</article>
-							))}
-						</div>
-					</GlassCard>
+						</h1>
+						<p className="text-sm sm:text-base text-[#8A93B5] mt-2 max-w-xl leading-relaxed">
+							See every recurring payment, what it costs, and where your money may be quietly leaking.
+						</p>
+					</div>
 
-					{/* Leaks Side Panel */}
-					<GlassCard className="lg:col-span-5 space-y-4">
-						<div className="flex items-center justify-between">
-							<div>
-								<h2 className="text-lg font-bold text-text-primary">Potential leaks</h2>
-								<p className="text-xs text-text-muted">Recurring expenses that deserve a second look</p>
-							</div>
-							<span className="px-2.5 py-1 rounded-lg bg-negative/10 border border-negative/30 text-negative font-bold text-xs">
-								{leaks.length}
-							</span>
-						</div>
-						<div className="divide-y divide-border pt-2">
-							{leaks.length ? leaks.map((leak) => (
-								<article key={leak.id} className="py-3.5 space-y-2">
-									<div className="flex items-center justify-between text-xs">
-										<span className={`font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded border ${leak.severity === 'high' ? 'bg-negative/10 text-negative border-negative/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'}`}>
-											{leak.severity} priority
-										</span>
-										<strong className="text-text-primary font-bold">{leak.merchant}</strong>
-										<span className="text-text-muted font-semibold">{money(leak.monthlyCost)}/mo</span>
-									</div>
-									<p className="text-xs text-text-muted leading-relaxed">{leak.reasons?.join(' · ')}</p>
-									<div className="text-xs text-positive bg-positive/10 border border-positive/20 px-3 py-1.5 rounded-lg">
-										Could save about <strong className="font-bold">{money(leak.potentialMonthlySavings)}/mo</strong>
-									</div>
-								</article>
-							)) : (
-								<p className="text-xs text-text-muted py-6 text-center">No potential leaks detected. Nice work!</p>
-							)}
-						</div>
-					</GlassCard>
-				</div>
-
-				{/* Recurring Table Section */}
-				<GlassCard className="space-y-4">
-					<div className="flex items-center justify-between">
-						<div>
-							<h2 className="text-lg font-bold text-text-primary">Recurring expenses</h2>
-							<p className="text-xs text-text-muted">Every repeated expense pattern found in your transaction history</p>
-						</div>
-						<span className="px-2.5 py-1 rounded-lg bg-white/5 border border-border text-text-muted font-bold text-xs">
-							{recurring.length}
+					{/* Live / Demo Status Indicator */}
+					<div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[#0F1633] border border-white/[0.06] text-xs font-medium flex-shrink-0">
+						<span className={`w-2 h-2 rounded-full flex-shrink-0 ${usingDemo ? 'bg-[#F5A524]' : 'bg-[#22D36A]'}`} />
+						<span className="text-[#8A93B5]">
+							{loading ? 'Analyzing transactions…' : usingDemo ? 'Demo insights · API offline' : 'Live transaction analysis'}
 						</span>
 					</div>
-					<div className="overflow-x-auto">
-						<table className="w-full text-xs text-left border-collapse">
-							<thead>
-								<tr className="border-b border-border text-text-muted uppercase text-[10px] tracking-wider">
-									<th className="py-2.5 px-3 font-semibold">Merchant</th>
-									<th className="py-2.5 px-3 font-semibold">Pattern</th>
-									<th className="py-2.5 px-3 font-semibold">Typical payment</th>
-									<th className="py-2.5 px-3 font-semibold">Next payment</th>
-									<th className="py-2.5 px-3 font-semibold">Confidence</th>
-								</tr>
-							</thead>
-							<tbody className="divide-y divide-border">
-								{recurring.map((item) => (
-									<tr key={item.id} className="hover:bg-white/5 transition-colors">
-										<td className="py-3 px-3 font-semibold text-text-primary">{item.merchant}</td>
-										<td className="py-3 px-3 capitalize text-text-muted">{item.cadence}</td>
-										<td className="py-3 px-3 text-text-primary font-medium">{money(item.amount)}</td>
-										<td className="py-3 px-3 text-text-muted">{dateLabel(item.nextExpectedPayment)}</td>
-										<td className="py-3 px-3"><Confidence value={item.confidence} /></td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
-				</GlassCard>
+				</div>
 
-				{/* Footer note */}
-				<p className="text-center text-xs text-text-muted pt-2 pb-6">
-					Confidence is based on payment timing, amount consistency, and transaction history. Always confirm a subscription before cancelling it.
-				</p>
+				{/* Show skeleton while loading */}
+				{loading ? (
+					<SubscriptionSkeleton />
+				) : (
+					<>
+						{/* ═══════════════════════════════════════════════════
+						    STATS PANEL — 4-column metric grid
+						    ═══════════════════════════════════════════════════ */}
+						<div className="bg-[#0F1633] border border-white/[0.06] rounded-[16px] p-6 sm:p-8 hover:border-[#0A84FF]/25 transition-all duration-200">
+							<div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.06]">
+
+								{/* Stat 1: Detected Subscriptions */}
+								<div className="pt-4 lg:pt-0 lg:px-4 first:lg:pl-0 flex flex-col justify-between">
+									<span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+										Detected
+									</span>
+									<div className="mt-2">
+										<div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#1FB5A5] to-[#22D36A] bg-clip-text text-transparent tracking-tight">
+											{summary.totalSubscriptions ?? subscriptions.length}
+										</div>
+										<div className="text-sm font-semibold text-white mt-1">
+											Active Subscriptions
+										</div>
+										<div className="text-xs text-[#8A93B5] mt-0.5">
+											Recurring merchants
+										</div>
+									</div>
+								</div>
+
+								{/* Stat 2: Monthly Cost */}
+								<div className="pt-4 lg:pt-0 lg:px-6 flex flex-col justify-between">
+									<span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+										Monthly Outflow
+									</span>
+									<div className="mt-2">
+										<div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#1FB5A5] to-[#22D36A] bg-clip-text text-transparent tracking-tight">
+											{money(summary.monthlyCost)}
+										</div>
+										<div className="text-sm font-semibold text-white mt-1">
+											Monthly Commitment
+										</div>
+										<div className="text-xs text-[#8A93B5] mt-0.5">
+											Average monthly spend
+										</div>
+									</div>
+								</div>
+
+								{/* Stat 3: Yearly Cost */}
+								<div className="pt-4 lg:pt-0 lg:px-6 flex flex-col justify-between">
+									<span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+										Annual Projection
+									</span>
+									<div className="mt-2">
+										<div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#1FB5A5] to-[#22D36A] bg-clip-text text-transparent tracking-tight">
+											{money(summary.yearlyCost)}
+										</div>
+										<div className="text-sm font-semibold text-white mt-1">
+											Yearly Commitment
+										</div>
+										<div className="text-xs text-[#8A93B5] mt-0.5">
+											Projected annual cost
+										</div>
+									</div>
+								</div>
+
+								{/* Stat 4: Potential Leaks */}
+								<div className="pt-4 lg:pt-0 lg:px-6 flex flex-col justify-between">
+									<span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+										Leak Exposure
+									</span>
+									<div className="mt-2">
+										<div className="text-3xl sm:text-4xl font-bold text-[#FF4D6A] tracking-tight">
+											{money(savings)}
+										</div>
+										<div className="text-sm font-semibold text-white mt-1">
+											Potential Monthly Leaks
+										</div>
+										<div className="text-xs text-[#8A93B5] mt-0.5">
+											{leaks.length} item{leaks.length === 1 ? '' : 's'} worth reviewing
+										</div>
+									</div>
+								</div>
+
+							</div>
+						</div>
+
+						{/* ═══════════════════════════════════════════════════
+						    RARELY USED REVIEW PANEL
+						    ═══════════════════════════════════════════════════ */}
+						<Card hover={false} className="p-6 sm:p-7">
+							<div className="flex items-start gap-3.5 mb-5">
+								<IconTile>
+									<svg className="w-5 h-5 text-[#0A84FF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+										<path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+									</svg>
+								</IconTile>
+								<div>
+									<h2 className="text-lg font-bold text-white tracking-tight">
+										Which subscriptions do you rarely use?
+									</h2>
+									<p className="text-xs text-[#8A93B5] mt-1 leading-relaxed">
+										Select anything you do not use often. We will flag it as a potential money leak for review.
+									</p>
+								</div>
+							</div>
+
+							{/* Subscription Checkbox Pills */}
+							<div className="flex flex-wrap gap-2.5 mb-5">
+								{subscriptions.map((subscription) => {
+									const isSelected = rarelyUsedIds.includes(subscription.id);
+									return (
+										<label
+											key={subscription.id}
+											className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px] cursor-pointer text-xs font-medium transition-all duration-150 border ${isSelected
+													? 'bg-[#0A84FF]/[0.15] border-[#0A84FF]/40 text-white shadow-[0_0_12px_rgba(10,132,255,0.2)]'
+													: 'bg-[#0B1029] border-white/[0.06] text-[#8A93B5] hover:border-white/[0.15] hover:text-white'
+												}`}
+										>
+											<input
+												type="checkbox"
+												checked={isSelected}
+												onChange={() => toggleRarelyUsed(subscription.id)}
+												className="sr-only"
+											/>
+											{/* Custom checkbox visual */}
+											<div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center flex-shrink-0 transition-all ${isSelected
+													? 'bg-[#0A84FF] border-[#0A84FF]'
+													: 'bg-transparent border-white/[0.2]'
+												}`}>
+												{isSelected && (
+													<svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+														<path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+													</svg>
+												)}
+											</div>
+											<span className="font-semibold">{subscription.merchant}</span>
+											<span className={isSelected ? 'text-white/60' : 'text-[#8A93B5]/60'}>
+												{money(subscription.monthlyCost)}/mo
+											</span>
+										</label>
+									);
+								})}
+							</div>
+
+							{/* Review Action */}
+							<div className="flex items-center gap-3 flex-wrap">
+								<PrimaryButton
+									onClick={reviewRarelyUsed}
+									disabled={!rarelyUsedIds.length || reviewing}
+								>
+									{reviewing ? (
+										<>
+											<svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+												<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+												<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+											</svg>
+											<span>Reviewing…</span>
+										</>
+									) : (
+										`Review selected${rarelyUsedIds.length ? ` (${rarelyUsedIds.length})` : ''}`
+									)}
+								</PrimaryButton>
+								{reviewMessage && (
+									<span className="text-xs font-semibold text-[#22D36A] flex items-center gap-1.5">
+										<span>✓</span> {reviewMessage}
+									</span>
+								)}
+							</div>
+						</Card>
+
+						{/* ═══════════════════════════════════════════════════
+						    CONTENT GRID — Subscriptions + Leaks
+						    ═══════════════════════════════════════════════════ */}
+						<div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+
+							{/* Left Column: Subscription Cards (3/5 width) */}
+							<div className="lg:col-span-3 space-y-5">
+								<div className="flex items-center justify-between gap-4">
+									<div>
+										<h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+											Your Subscriptions
+										</h2>
+										<p className="text-xs text-[#8A93B5] mt-0.5">
+											Recurring payments with a predictable cadence
+										</p>
+									</div>
+									<span className="px-2.5 py-1 rounded-[8px] bg-[#0A84FF]/[0.12] border border-[#0A84FF]/30 text-[#0A84FF] text-xs font-bold">
+										{subscriptions.length}
+									</span>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									{subscriptions.map((subscription) => (
+										<SubscriptionCard
+											key={subscription.id}
+											subscription={subscription}
+											money={money}
+											dateLabel={dateLabel}
+										/>
+									))}
+								</div>
+							</div>
+
+							{/* Right Column: Leak Cards (2/5 width) */}
+							<div className="lg:col-span-2 space-y-5">
+								<div className="flex items-center justify-between gap-4">
+									<div>
+										<h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+											Potential{' '}
+											<span className="text-[#FF4D6A]">Leaks</span>
+										</h2>
+										<p className="text-xs text-[#8A93B5] mt-0.5">
+											Recurring expenses that deserve a second look
+										</p>
+									</div>
+									<span className="px-2.5 py-1 rounded-[8px] bg-[#FF4D6A]/[0.12] border border-[#FF4D6A]/30 text-[#FF4D6A] text-xs font-bold">
+										{leaks.length}
+									</span>
+								</div>
+
+								{leaks.length > 0 ? (
+									<div className="space-y-4">
+										{leaks.map((leak) => (
+											<LeakCard
+												key={leak.id}
+												leak={leak}
+												money={money}
+											/>
+										))}
+									</div>
+								) : (
+									<Card hover={false} className="py-12 px-6 text-center flex flex-col items-center justify-center">
+										<div className="w-12 h-12 rounded-[12px] bg-[#22D36A]/[0.12] border border-[#22D36A]/30 text-[#22D36A] flex items-center justify-center mb-3">
+											<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+												<path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+											</svg>
+										</div>
+										<h3 className="text-base font-bold text-white mb-1">
+											No Leaks Detected
+										</h3>
+										<p className="text-xs text-[#8A93B5]">
+											All subscriptions appear to be actively used. Nice work!
+										</p>
+									</Card>
+								)}
+							</div>
+						</div>
+
+						{/* ═══════════════════════════════════════════════════
+						    RECURRING EXPENSES TABLE
+						    ═══════════════════════════════════════════════════ */}
+						<Card hover={false} className="overflow-hidden">
+							<div className="flex items-center justify-between gap-4 mb-5">
+								<div>
+									<h2 className="text-lg font-bold text-white tracking-tight">
+										Recurring Expenses
+									</h2>
+									<p className="text-xs text-[#8A93B5] mt-0.5">
+										Every repeated expense pattern found in your transaction history
+									</p>
+								</div>
+								<span className="px-2.5 py-1 rounded-[8px] bg-[#0A84FF]/[0.12] border border-[#0A84FF]/30 text-[#0A84FF] text-xs font-bold">
+									{recurring.length}
+								</span>
+							</div>
+
+							<div className="overflow-x-auto -mx-6 px-6">
+								<table className="w-full border-collapse text-sm min-w-[620px]">
+									<thead>
+										<tr className="border-b border-white/[0.06]">
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Merchant
+											</th>
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Pattern
+											</th>
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Typical Payment
+											</th>
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Next Payment
+											</th>
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Confidence
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{recurring.map((item) => (
+											<tr
+												key={item.id}
+												className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors duration-100"
+											>
+												<td className="py-3.5 px-3 text-sm font-semibold text-white">
+													{item.merchant}
+												</td>
+												<td className="py-3.5 px-3 text-xs text-[#8A93B5] capitalize">
+													{item.cadence}
+												</td>
+												<td className="py-3.5 px-3 text-xs text-white font-medium">
+													{money(item.amount)}
+												</td>
+												<td className="py-3.5 px-3 text-xs text-[#8A93B5]">
+													{dateLabel(item.nextExpectedPayment)}
+												</td>
+												<td className="py-3.5 px-3">
+													<ConfidenceBadge value={item.confidence} />
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						</Card>
+
+						{/* ═══════════════════════════════════════════════════
+						    FOOTER DISCLAIMER
+						    ═══════════════════════════════════════════════════ */}
+						<div className="text-center text-[11px] text-[#8A93B5] pb-4">
+							Confidence is based on payment timing, amount consistency, and transaction history. Always confirm a subscription before cancelling it.
+						</div>
+					</>
+				)}
+
 			</div>
-		</main>
+		</div>
 	);
 }
+

@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import GlassCard from '../../components/common/GlassCard';
 import TransactionForm from '../../components/transactions/TransactionForm';
 import TransactionList from '../../components/transactions/TransactionList';
 import TransactionFilters from '../../components/transactions/TransactionFilters';
+import { BadgePill, Card, Tile } from '../../components/budget-goals/ThemeCard';
 import {
   getTransactions,
   createTransaction,
@@ -270,71 +270,62 @@ export default function TransactionsPage() {
     }).format(val || 0);
   };
 
+  /* ═══════════════════════════════════════════════════
+     RENDER — CryptoVault Dark Fintech Theme
+     ═══════════════════════════════════════════════════ */
   return (
-    <main className="min-h-screen bg-bg text-text-primary px-4 sm:px-6 lg:px-8 py-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Top Header */}
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center text-[#0A0E1A] shadow-md">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
+    <div className="min-h-screen bg-[#0A0E27] text-white p-4 sm:p-8 pb-20 space-y-8 antialiased">
+      <div className="max-w-[1240px] mx-auto space-y-8">
+
+        {/* ═══════════════════════════════════════════════
+            HEADER
+            ═══════════════════════════════════════════════ */}
+        <header className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-white/[0.06] pb-6">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-[12px] bg-gradient-to-br from-[#0A84FF] to-[#1FB5A5] flex items-center justify-center shadow-[0_8px_20px_-4px_rgba(10,132,255,0.5)]">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5">
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             </div>
-
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold text-text-primary">
-                  Transactions
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                  Transaction{' '}
+                  <span className="bg-gradient-to-r from-[#0A84FF] via-[#22D36A] to-[#39FF14] bg-clip-text text-transparent">
+                    Ledger
+                  </span>
                 </h1>
-
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20">
-                  LIVE LEDGER
-                </span>
+                <BadgePill text="TRANSACTIONS" className="hidden sm:inline-flex" />
               </div>
-
-              <p className="text-sm text-text-muted">
+              <p className="text-xs sm:text-sm text-[#8A93B5]">
                 Track → Understand → Act with AI-driven categorization
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold ${
-                error
-                  ? 'bg-negative/10 border-negative/20 text-negative'
-                  : 'bg-positive/10 border-positive/20 text-positive'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  error ? 'bg-negative' : 'bg-positive'
-                }`}
-              />
+            {/* API Status Badge */}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${error
+                ? 'bg-[#FF4D6A]/[0.12] border-[#FF4D6A]/30 text-[#FF4D6A]'
+                : 'bg-[#22D36A]/[0.12] border-[#22D36A]/30 text-[#22D36A]'
+              }`}>
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${error
+                  ? 'bg-[#FF4D6A] shadow-[0_0_8px_#FF4D6A]'
+                  : 'bg-[#22D36A] shadow-[0_0_8px_#22D36A]'
+                }`} />
               {error ? 'API Disconnected' : 'Live Ledger Active'}
             </div>
 
+            {/* Toggle Form Button */}
             <button
               type="button"
               onClick={() => setShowForm(!showForm)}
-              className="px-4 py-2 rounded-xl bg-accent text-[#0A0E1A] text-sm font-bold shadow-md hover:bg-accent/90 transition-all flex items-center gap-1.5"
+              className={`px-4 py-2.5 rounded-[12px] text-sm font-semibold flex items-center gap-1.5 transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-[#0A84FF] ${showForm
+                  ? 'bg-white/[0.06] border-white/[0.08] text-white hover:bg-white/[0.1]'
+                  : 'bg-[#0A84FF] border-[#0A84FF] text-white shadow-[0_6px_18px_rgba(10,132,255,0.35)] hover:bg-[#0975e0]'
+                }`}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 {showForm ? (
                   <line x1="5" y1="12" x2="19" y2="12" />
                 ) : (
@@ -349,183 +340,148 @@ export default function TransactionsPage() {
           </div>
         </header>
 
-        {/* Toast Notification */}
+        {/* ═══════════════════════════════════════════════
+            TOAST NOTIFICATION
+            ═══════════════════════════════════════════════ */}
         {notification && (
-          <div
-            className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl font-semibold text-sm shadow-2xl backdrop-blur-md text-white ${
-              notification.type === 'success'
-                ? 'bg-positive/90 text-[#0A0E1A]'
-                : 'bg-negative/90'
-            }`}
-          >
+          <div className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-[12px] text-white font-semibold text-sm flex items-center gap-2.5 backdrop-blur-md shadow-[0_12px_30px_rgba(0,0,0,0.5)] animate-[fadeIn_0.3s_ease-out] ${notification.type === 'success'
+              ? 'bg-[#22D36A]/95'
+              : 'bg-[#FF4D6A]/95'
+            }`}>
+            <span>{notification.type === 'success' ? '✓' : '✕'}</span>
             <span>{notification.message}</span>
           </div>
         )}
 
-        {/* Hero Summary */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Total Balance */}
-          <GlassCard>
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                Total Balance
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <rect x="2" y="4" width="20" height="16" rx="2" />
-                  <line x1="2" y1="10" x2="22" y2="10" />
-                </svg>
+        {/* ═══════════════════════════════════════════════
+            STATS PANEL — 4-column KPI grid
+            ═══════════════════════════════════════════════ */}
+        <div className="bg-[#0F1633] border border-white/[0.06] rounded-[16px] p-6 sm:p-8 hover:border-[#0A84FF]/25 transition-all duration-200">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.06]">
+
+            {/* Total Balance */}
+            <div className="pt-4 lg:pt-0 lg:pr-6 flex flex-col justify-between">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+                  Total Balance
+                </span>
+                <div className="w-8 h-8 rounded-[8px] bg-[#0A84FF]/[0.12] flex items-center justify-center text-[#0A84FF]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                </div>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-[#1FB5A5] to-[#22D36A] bg-clip-text text-transparent tracking-tight">
+                {formatCurrency(animBalance)}
+              </div>
+              <div className={`text-xs font-semibold mt-1 ${stats.balance >= 0 ? 'text-[#22D36A]' : 'text-[#FF4D6A]'
+                }`}>
+                {stats.balance >= 0 ? '↗ Positive Net Inflow' : '↘ Deficit Net Outflow'}
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-text-primary mb-2">
-              {formatCurrency(animBalance)}
-            </div>
-            <div
-              className={`text-xs font-semibold ${
-                stats.balance >= 0 ? 'text-positive' : 'text-negative'
-              }`}
-            >
-              {stats.balance >= 0
-                ? '↗ Positive Net Inflow'
-                : '↘ Deficit Net Outflow'}
-            </div>
-          </GlassCard>
 
-          {/* Total Income */}
-          <GlassCard>
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                Total Income
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-positive/10 flex items-center justify-center text-positive">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                  <polyline points="17 6 23 6 23 12" />
-                </svg>
+            {/* Total Income */}
+            <div className="pt-4 lg:pt-0 lg:px-6 flex flex-col justify-between">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+                  Total Income
+                </span>
+                <div className="w-8 h-8 rounded-[8px] bg-[#22D36A]/[0.12] flex items-center justify-center text-[#22D36A]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
+                </div>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-[#22D36A] tracking-tight">
+                {formatCurrency(animIncome)}
+              </div>
+              <div className="text-xs text-[#8A93B5] mt-1">
+                {transactions.filter((t) => t.type === 'income').length} income records
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-positive mb-2">
-              {formatCurrency(animIncome)}
-            </div>
-            <div className="text-xs text-text-muted">
-              {transactions.filter((t) => t.type === 'income').length} income records
-            </div>
-          </GlassCard>
 
-          {/* Total Expenses */}
-          <GlassCard>
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                Total Expenses
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-negative/10 flex items-center justify-center text-negative">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
-                  <polyline points="17 18 23 18 23 12" />
-                </svg>
+            {/* Total Expenses */}
+            <div className="pt-4 lg:pt-0 lg:px-6 flex flex-col justify-between">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+                  Total Expenses
+                </span>
+                <div className="w-8 h-8 rounded-[8px] bg-[#FF4D6A]/[0.12] flex items-center justify-center text-[#FF4D6A]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" /></svg>
+                </div>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-[#FF4D6A] tracking-tight">
+                {formatCurrency(animExpenses)}
+              </div>
+              <div className="text-xs text-[#8A93B5] mt-1">
+                {transactions.filter((t) => t.type === 'expense').length} expense records
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-negative mb-2">
-              {formatCurrency(animExpenses)}
-            </div>
-            <div className="text-xs text-text-muted">
-              {transactions.filter((t) => t.type === 'expense').length} expense records
-            </div>
-          </GlassCard>
 
-          {/* Net Savings */}
-          <GlassCard>
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                Net Savings
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-accent-2/10 flex items-center justify-center text-accent-2">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                </svg>
+            {/* Net Savings */}
+            <div className="pt-4 lg:pt-0 lg:pl-6 flex flex-col justify-between">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+                  Net Savings
+                </span>
+                <div className="w-8 h-8 rounded-[8px] bg-[#1FB5A5]/[0.12] flex items-center justify-center text-[#1FB5A5]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
+                </div>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-[#1FB5A5] to-[#22D36A] bg-clip-text text-transparent tracking-tight">
+                {formatCurrency(animSavings)}
+              </div>
+              <div className="text-xs mt-1">
+                <span className="text-[#1FB5A5] font-semibold">{stats.savingsRate}%</span>{' '}
+                <span className="text-[#8A93B5]">savings rate</span>
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-accent-2 mb-2">
-              {formatCurrency(animSavings)}
-            </div>
-            <div className="text-xs font-semibold text-accent-2">
-              {stats.savingsRate}% <span className="text-text-muted font-normal">savings rate</span>
-            </div>
-          </GlassCard>
-        </section>
 
-        {/* Analytics Row */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════
+            ANALYTICS ROW — Spending Breakdown + Weekly Cashflow
+            ═══════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
           {/* Spending Breakdown */}
-          <GlassCard>
+          <Card hover={false}>
             <div className="flex justify-between items-center mb-5">
               <div>
-                <h3 className="text-base font-bold text-text-primary">
+                <h3 className="text-base font-bold text-white tracking-tight">
                   Spending Breakdown
                 </h3>
-                <p className="text-xs text-text-muted">
+                <p className="text-xs text-[#8A93B5] mt-0.5">
                   Categorical distribution from logged expenses
                 </p>
               </div>
-              <span className="text-xs text-accent font-semibold">
+              <span className="px-2.5 py-1 rounded-[8px] bg-[#0A84FF]/[0.12] border border-[#0A84FF]/30 text-[#0A84FF] text-xs font-bold">
                 {categoryBreakdown.length} Categories
               </span>
             </div>
 
             {categoryBreakdown.length === 0 ? (
-              <div className="py-8 text-center text-text-muted text-xs">
+              <div className="py-9 text-center text-[#8A93B5] text-sm">
                 No expense transactions logged yet to generate category breakdown.
               </div>
             ) : (
               <div className="space-y-3.5">
                 {categoryBreakdown.map((item, i) => {
-                  const colors = ['#f97316', '#ec4899', '#38bdf8', '#eab308', '#a855f7'];
-                  const color = colors[i % colors.length];
+                  const barColors = ['#F5A524', '#FF4D6A', '#0A84FF', '#1FB5A5', '#22D36A'];
+                  const color = barColors[i % barColors.length];
 
                   return (
                     <div key={item.category}>
                       <div className="flex justify-between text-xs mb-1.5">
-                        <span className="text-text-primary font-medium">
-                          {item.category}
-                        </span>
-                        <span className="text-text-muted font-semibold">
+                        <span className="text-white font-medium">{item.category}</span>
+                        <span className="text-[#8A93B5] font-semibold">
                           {formatCurrency(item.amount)} ({item.percentage}%)
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all duration-700"
+                          className="h-full rounded-full transition-[width] duration-700 ease-out"
                           style={{
                             width: `${item.percentage}%`,
-                            backgroundColor: color
+                            background: color,
+                            boxShadow: `0 0 10px ${color}`
                           }}
                         />
                       </div>
@@ -534,43 +490,41 @@ export default function TransactionsPage() {
                 })}
               </div>
             )}
-          </GlassCard>
+          </Card>
 
-          {/* Weekly Cashflow */}
-          <GlassCard className="flex flex-col justify-between">
+          {/* Weekly Cashflow Chart */}
+          <Card hover={false} className="flex flex-col justify-between">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-base font-bold text-text-primary">
+                <h3 className="text-base font-bold text-white tracking-tight">
                   Weekly Cashflow Velocity
                 </h3>
-                <p className="text-xs text-text-muted">
+                <p className="text-xs text-[#8A93B5] mt-0.5">
                   Dynamic inflow vs outflow by calendar period
                 </p>
               </div>
-
-              <div className="flex gap-3 text-xs font-semibold">
-                <span className="text-positive flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-positive" />
+              <div className="flex gap-3 text-[11px] font-semibold">
+                <span className="flex items-center gap-1 text-[#22D36A]">
+                  <span className="w-2 h-2 rounded-full bg-[#22D36A]" />
                   Inflow
                 </span>
-                <span className="text-negative flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-negative" />
+                <span className="flex items-center gap-1 text-[#FF4D6A]">
+                  <span className="w-2 h-2 rounded-full bg-[#FF4D6A]" />
                   Outflow
                 </span>
               </div>
             </div>
 
-            <div className="w-full h-36 relative">
+            <div className="w-full h-[140px] relative">
               <svg viewBox="0 0 360 140" className="w-full h-full overflow-visible">
                 <defs>
                   <linearGradient id="flowIncomeGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#39FF88" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#39FF88" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#22D36A" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#22D36A" stopOpacity="0.0" />
                   </linearGradient>
-
                   <linearGradient id="flowExpenseGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FF5C7A" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#FF5C7A" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#FF4D6A" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#FF4D6A" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
 
@@ -580,6 +534,7 @@ export default function TransactionsPage() {
 
                 {(() => {
                   const maxH = 100;
+
                   const ptsIncome = weeklyCashflow.weeks.map((w, idx) => {
                     const x = idx * 120;
                     const y = 120 - (w.income / weeklyCashflow.maxVal) * maxH;
@@ -601,10 +556,9 @@ export default function TransactionsPage() {
                       <polyline
                         points={ptsIncome.join(' ')}
                         fill="none"
-                        stroke="#39FF88"
+                        stroke="#22D36A"
                         strokeWidth="2.5"
                       />
-
                       <polygon
                         points={`0,120 ${ptsExpense.join(' ')} 360,120`}
                         fill="url(#flowExpenseGrad)"
@@ -612,7 +566,7 @@ export default function TransactionsPage() {
                       <polyline
                         points={ptsExpense.join(' ')}
                         fill="none"
-                        stroke="#FF5C7A"
+                        stroke="#FF4D6A"
                         strokeWidth="2"
                         strokeDasharray="4 4"
                       />
@@ -622,15 +576,17 @@ export default function TransactionsPage() {
               </svg>
             </div>
 
-            <div className="flex justify-between text-[11px] text-text-muted mt-2">
+            <div className="flex justify-between text-[11px] text-[#8A93B5] mt-2.5">
               {weeklyCashflow.weeks.map((w) => (
                 <span key={w.label}>{w.label}</span>
               ))}
             </div>
-          </GlassCard>
-        </section>
+          </Card>
+        </div>
 
-        {/* Transaction Form */}
+        {/* ═══════════════════════════════════════════════
+            TRANSACTION FORM
+            ═══════════════════════════════════════════════ */}
         {showForm && (
           <TransactionForm
             onSubmit={handleFormSubmit}
@@ -644,7 +600,9 @@ export default function TransactionsPage() {
           />
         )}
 
-        {/* Filters */}
+        {/* ═══════════════════════════════════════════════
+            FILTERS
+            ═══════════════════════════════════════════════ */}
         <TransactionFilters
           filters={filters}
           onFilterChange={setFilters}
@@ -657,72 +615,71 @@ export default function TransactionsPage() {
           }
         />
 
-        {/* Error */}
+        {/* ═══════════════════════════════════════════════
+            ERROR STATE
+            ═══════════════════════════════════════════════ */}
         {error && (
-          <GlassCard className="text-center py-6 border-negative/30 bg-negative/10">
-            <div className="text-3xl mb-2">⚠️</div>
-            <p className="text-sm font-semibold text-negative mb-3">
-              {error}
-            </p>
+          <Card hover={false} className="text-center py-8 px-6">
+            <div className="text-3xl mb-3">⚠️</div>
+            <p className="text-sm text-[#FF4D6A] font-semibold mb-4">{error}</p>
             <button
               type="button"
               onClick={() => loadTransactions(filters)}
-              className="px-4 py-2 rounded-xl bg-negative/20 text-white text-xs font-semibold hover:bg-negative/30 transition-colors"
+              className="px-5 py-2 rounded-[12px] bg-[#FF4D6A]/20 hover:bg-[#FF4D6A]/30 text-white text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#FF4D6A]"
             >
               Retry Connection
             </button>
-          </GlassCard>
+          </Card>
         )}
 
-        {/* Loading */}
+        {/* ═══════════════════════════════════════════════
+            LOADING STATE
+            ═══════════════════════════════════════════════ */}
         {loading && !error && (
-          <GlassCard className="text-center py-12">
-            <div className="w-8 h-8 rounded-full border-2 border-accent/20 border-t-accent animate-spin mx-auto mb-3" />
-            <p className="text-xs text-text-muted">
+          <Card hover={false} className="text-center py-14 px-6">
+            <div className="w-9 h-9 rounded-full border-[3px] border-[#0A84FF]/20 border-t-[#0A84FF] mx-auto mb-4 animate-spin" />
+            <p className="text-sm text-[#8A93B5]">
               Syncing ledger with API...
             </p>
-          </GlassCard>
+          </Card>
         )}
 
-        {/* Empty State */}
+        {/* ═══════════════════════════════════════════════
+            EMPTY STATE
+            ═══════════════════════════════════════════════ */}
         {!loading && !error && transactions.length === 0 && (
-          <GlassCard className="text-center py-12">
-            <div className="text-4xl mb-3">💳</div>
-            <h3 className="text-lg font-bold text-text-primary mb-1">
+          <Card hover={false} className="text-center py-14 px-6 flex flex-col items-center justify-center">
+            <div className="text-5xl mb-3.5">💳</div>
+            <h3 className="text-lg font-bold text-white mb-2">
               No Transactions Recorded
             </h3>
-            <p className="text-xs text-text-muted max-w-md mx-auto mb-4">
+            <p className="text-sm text-[#8A93B5] max-w-md mx-auto mb-5">
               {filters.search || filters.type || filters.category
                 ? 'No transactions matched your active search filters. Try clearing your filters to view all records.'
-                : 'No transactions recorded yet. Use the record transaction form above to add your first income or expense.'}
+                : 'No transactions recorded yet. Use the record transaction card above to add your first income or expense.'}
             </p>
-
             {(filters.search || filters.type || filters.category) && (
               <button
                 type="button"
-                onClick={() =>
-                  setFilters({
-                    search: '',
-                    type: '',
-                    category: ''
-                  })
-                }
-                className="px-4 py-2 rounded-xl bg-white/5 border border-border text-text-primary text-xs font-semibold hover:bg-white/10 transition-colors"
+                onClick={() => setFilters({ search: '', type: '', category: '' })}
+                className="px-4 py-2.5 rounded-[12px] bg-white/[0.06] border border-white/[0.08] text-white text-sm font-semibold hover:bg-white/[0.1] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0A84FF]"
               >
                 Clear Search Filters
               </button>
             )}
-          </GlassCard>
+          </Card>
         )}
 
-        {/* Transaction List */}
+        {/* ═══════════════════════════════════════════════
+            TRANSACTION LIST
+            ═══════════════════════════════════════════════ */}
         {!loading && !error && transactions.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex justify-between items-center px-1">
-              <span className="text-sm font-bold text-text-primary">
+          <div>
+            <div className="flex justify-between items-center mb-4 px-1">
+              <span className="text-sm font-bold text-white">
                 Recent Transactions ({transactions.length})
               </span>
-              <span className="text-xs text-text-muted">
+              <span className="text-xs text-[#8A93B5]">
                 Ordered chronologically
               </span>
             </div>
@@ -734,7 +691,8 @@ export default function TransactionsPage() {
             />
           </div>
         )}
+
       </div>
-    </main>
+    </div>
   );
-}
+}
