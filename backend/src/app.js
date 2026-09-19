@@ -1,3 +1,5 @@
+require('dotenv').config();
+// FinPilot backend server entry point
 const express = require('express');
 const cors = require('cors');
 

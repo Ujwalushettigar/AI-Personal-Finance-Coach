@@ -12,20 +12,22 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5
 
 export async function askCoach(message) {
   const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token || '';
+  if (!session?.access_token) {
+    throw new Error('Please sign in to use the AI Coach.');
+  }
 
   const response = await fetch(`${API_BASE_URL}/coach/ask`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${session.access_token}`,
     },
     body: JSON.stringify({ message }),
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    throw new Error(errorData.error || errorData.details || `HTTP error! status: ${response.status}`);
   }
 
   return await response.json();
