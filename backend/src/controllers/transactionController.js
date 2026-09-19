@@ -88,7 +88,7 @@ const createTransaction = async (req, res) => {
       description: description.trim(),
       merchant: merchant ? merchant.trim() : null,
       date: transactionDate
-    });
+    }, req.authToken);
 
     return res.status(201).json({
       success: true,
@@ -142,7 +142,7 @@ const getTransactions = async (req, res) => {
       search,
       limit,
       offset
-    });
+    }, req.authToken);
 
     return res.status(200).json({
       success: true,
@@ -173,7 +173,7 @@ const getTransactionById = async (req, res) => {
       });
     }
 
-    const transaction = await Transaction.findById(id, userId);
+    const transaction = await Transaction.findById(id, userId, req.authToken);
 
     if (!transaction) {
       return res.status(404).json({
@@ -212,7 +212,7 @@ const updateTransaction = async (req, res) => {
     }
 
     // Check existence
-    const existing = await Transaction.findById(id, userId);
+    const existing = await Transaction.findById(id, userId, req.authToken);
     if (!existing) {
       return res.status(404).json({
         success: false,
@@ -283,7 +283,7 @@ const updateTransaction = async (req, res) => {
       });
     }
 
-    const updated = await Transaction.update(id, userId, updateData);
+    const updated = await Transaction.update(id, userId, updateData, req.authToken);
 
     return res.status(200).json({
       success: true,
@@ -314,7 +314,7 @@ const deleteTransaction = async (req, res) => {
       });
     }
 
-    const deleted = await Transaction.delete(id, userId);
+    const deleted = await Transaction.delete(id, userId, req.authToken);
 
     if (!deleted) {
       return res.status(404).json({

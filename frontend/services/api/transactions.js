@@ -5,13 +5,25 @@
  * Provides client-side methods to interact with /api/transactions REST endpoints.
  */
 
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+);
+
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_API_URL
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/transactions`
-      : 'http://localhost:5000/api/transactions';
+    return `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'}/transactions`;
   }
   return 'http://localhost:5000/api/transactions';
+};
+
+const getAuthHeaders = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : {};
 };
 
 const handleResponse = async (response) => {
@@ -49,7 +61,8 @@ export const getTransactions = async (filters = {}) => {
   const response = await fetch(url, {
     method: 'GET',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
     }
   });
 
@@ -64,7 +77,8 @@ export const getTransactionById = async (id) => {
   const response = await fetch(`${baseUrl}/${id}`, {
     method: 'GET',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
     }
   });
 
@@ -79,7 +93,8 @@ export const createTransaction = async (transactionData) => {
   const response = await fetch(baseUrl, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
     },
     body: JSON.stringify(transactionData)
   });
@@ -95,7 +110,8 @@ export const updateTransaction = async (id, updateData) => {
   const response = await fetch(`${baseUrl}/${id}`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
     },
     body: JSON.stringify(updateData)
   });
@@ -111,7 +127,8 @@ export const deleteTransaction = async (id) => {
   const response = await fetch(`${baseUrl}/${id}`, {
     method: 'DELETE',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
     }
   });
 

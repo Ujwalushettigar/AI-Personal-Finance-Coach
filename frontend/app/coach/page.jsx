@@ -24,7 +24,7 @@ export default function CoachPage() {
   const [messages, setMessages] = useState([
     {
       role: "coach",
-      text: "Hello! I am your AI Financial Coach. Ask me anything about your budget, transactions, spending patterns, or subscription leaks!",
+      text: "Ask me about your spending, budget, or subscriptions. I’ll keep the answer brief and actionable.",
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
@@ -135,8 +135,8 @@ export default function CoachPage() {
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${msg.role === "user"
-                    ? "bg-[#0A84FF] text-white shadow-[0_0_12px_rgba(10,132,255,0.4)]"
-                    : "bg-[#161F48] border border-[#39FF14]/30 text-[#39FF14]"
+                  ? "bg-[#0A84FF] text-white shadow-[0_0_12px_rgba(10,132,255,0.4)]"
+                  : "bg-[#161F48] border border-[#39FF14]/30 text-[#39FF14]"
                   }`}
               >
                 {msg.role === "user" ? <User className="w-4 h-4 text-[#0A0E1A]" /> : <Bot className="w-4 h-4" />}
@@ -144,8 +144,8 @@ export default function CoachPage() {
 
               <div
                 className={`max-w-[80%] rounded-2xl p-4 text-sm leading-relaxed ${msg.role === "user"
-                    ? "bg-[#0A84FF] text-white font-medium rounded-tr-none shadow-[0_0_16px_rgba(10,132,255,0.25)]"
-                    : "bg-[#0B1029] border border-white/10 text-white rounded-tl-none shadow-sm"
+                  ? "bg-[#0A84FF] text-white font-medium rounded-tr-none shadow-[0_0_16px_rgba(10,132,255,0.25)]"
+                  : "bg-[#0B1029] border border-white/10 text-white rounded-tl-none shadow-sm"
                   }`}
               >
                 {msg.text}
@@ -195,7 +195,8 @@ export default function CoachPage() {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Ask your AI coach a financial question..."
-            className="flex-1 bg-[#070B1E] border border-white/15 rounded-xl px-4 py-3 text-sm text-white placeholder-[#8A93B5]/60 focus:border-[#0A84FF] focus:outline-none focus:ring-1 focus:ring-[#0A84FF] transition-all"
+            maxLength={1000}
+            className="flex-1 bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all"
           />
           <button
             type="submit"

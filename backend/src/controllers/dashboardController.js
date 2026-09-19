@@ -1,12 +1,27 @@
-// Note: This controller will call insightEngine.js once Members A/B/C's services exist
+const { getSupabaseClient } = require('../config/db');
+const { detectRecurringExpenses } = require('../services/recurringDetection');
+
 async function getDashboardSummary(req, res) {
   try {
+    const userId = req.user?.id || req.user?.sub;
+    const { data: transactions, error } = await getSupabaseClient(req.authToken)
+      .from('transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: false });
+    if (error) throw error;
+
+    const rows = transactions || [];
+    const totalIncome = rows.filter((row) => row.type === 'income').reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const totalExpense = rows.filter((row) => row.type === 'expense').reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const activeSubscriptions = detectRecurringExpenses(rows).filter((item) => item.likelySubscription);
+
     const summary = {
-      totalIncome: 0,
-      totalExpense: 0,
+      totalIncome: Number(totalIncome.toFixed(2)),
+      totalExpense: Number(totalExpense.toFixed(2)),
       healthScore: null,
-      recentTransactions: [],
-      activeSubscriptions: [],
+      recentTransactions: rows.slice(0, 5),
+      activeSubscriptions,
     };
     return res.json(summary);
   } catch (error) {

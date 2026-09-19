@@ -1,39 +1,43 @@
-const jwt = require('jsonwebtoken');
+const { getSupabaseClient } = require('../config/db');
 
-function verifyAuth(req, res, next) {
+async function verifyAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided. Please log in first.' });
+      return res.status(401).json({
+        error: 'No token provided. Please log in first.',
+      });
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.slice(7).trim();
+
     if (!token) {
-      return res.status(401).json({ error: 'No token provided. Please log in first.' });
+      return res.status(401).json({
+        error: 'No token provided. Please log in first.',
+      });
     }
 
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
-    let decoded = null;
+    const supabase = getSupabaseClient(token);
 
-    if (jwtSecret) {
-      try {
-        decoded = jwt.verify(token, jwtSecret);
-      } catch (err) {
-        // Fallback decoding if token was signed by Supabase directly
-        decoded = jwt.decode(token);
-      }
-    } else {
-      decoded = jwt.decode(token);
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data || !data.user) {
+      return res.status(401).json({
+        error: 'Invalid or expired token',
+      });
     }
 
-    if (!decoded) {
-      return res.status(401).json({ error: 'Invalid or expired token' });
-    }
+    req.user = data.user;
+    req.authToken = token;
 
-    req.user = decoded;
-    next();
+    return next();
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    console.error('Authentication error:', err);
+
+    return res.status(401).json({
+      error: 'Invalid or expired token',
+    });
   }
 }
 
