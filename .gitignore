@@ -34,3 +34,54 @@ Thumbs.db
 
 # Old app directory
 /my-app/
+backend/.env
+frontend/.env
+frontend/.env.local
+.env*.local
+*.env
+!.env.example
+!**/.env.example
+>>>>>>> origin/Member-B
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+<<<<<<< HEAD
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Old app directory
+/my-app/
+=======
+lerna-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Cache
+.eslintcache
+.turbo/
+.vercel
+/my-app/
+>>>>>>> origin/Member-B
