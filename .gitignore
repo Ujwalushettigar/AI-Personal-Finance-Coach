@@ -46,3 +46,4 @@ coverage/
 .eslintcache
 .turbo/
 .vercel
+/my-app/
