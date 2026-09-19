@@ -1,7 +1,17 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+let GoogleGenerativeAI;
+try {
+  ({ GoogleGenerativeAI } = require('@google/generative-ai'));
+} catch (err) {
+  GoogleGenerativeAI = null;
+}
 
 async function askCoach(userMessage, userContext = {}) {
   try {
+    if (!GoogleGenerativeAI) {
+      console.warn('@google/generative-ai is not installed in backend/node_modules.');
+      return "The AI Coach module (@google/generative-ai) is not installed. Please run 'npm install' in the backend directory.";
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.warn('GEMINI_API_KEY environment variable is not set.');

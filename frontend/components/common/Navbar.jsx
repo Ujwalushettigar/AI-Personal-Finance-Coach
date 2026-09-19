@@ -5,6 +5,14 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { LogOut, Search } from "lucide-react";
 
+/**
+ * Navbar (CryptoVault Fintech Theme)
+ * - Deep navy backdrop blur (#0A0E27/90) with border-white/10
+ * - Brand logo with #39FF14 neon green badge & Space Grotesk typography
+ * - Center pill navigation with active #39FF14 neon glow state
+ * - User pill badge with #161F48 avatar & #FF4D6A hover logout
+ * - Preserved 100% of route detection, auth state, and hide-on-login/signup logic
+ */
 export default function Navbar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
@@ -23,18 +31,20 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-950/85 backdrop-blur-xl border-b border-white/10 text-white">
+    <header className="sticky top-0 z-50 bg-[#0A0E27]/90 backdrop-blur-xl border-b border-white/10 text-white font-['DM_Sans',sans-serif]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link href="/dashboard" className="font-extrabold text-xl tracking-tight text-white flex items-center gap-2.5">
-          <span className="bg-gradient-to-r from-rose-500 to-amber-500 text-white rounded-lg px-2.5 py-1 text-xs font-black shadow-lg">
+        <Link href="/dashboard" className="font-extrabold text-xl tracking-tight text-white flex items-center gap-2.5 font-['Space_Grotesk',sans-serif]">
+          <span className="bg-[#39FF14] text-[#0A0E27] rounded-lg px-2.5 py-1 text-xs font-black shadow-[0_0_16px_rgba(57,255,20,0.4)] tracking-wider">
             FP
           </span>
-          <span>FinPilot</span>
+          <span className="bg-gradient-to-r from-white via-slate-100 to-[#8A93B5] bg-clip-text text-transparent">
+            FinPilot
+          </span>
         </Link>
 
-        {/* Center Pill Navigation (Fitonist Reference Style) */}
-        <nav className="hidden md:flex items-center gap-1 bg-white/5 p-1.5 rounded-full border border-white/10 shadow-inner">
+        {/* Center Pill Navigation */}
+        <nav className="hidden md:flex items-center gap-1 bg-[#0B1029] p-1.5 rounded-full border border-white/10 shadow-inner">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -43,8 +53,8 @@ export default function Navbar() {
                 href={item.href}
                 className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 ${
                   isActive
-                    ? "bg-white text-slate-950 shadow-md scale-105"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    ? "bg-[#39FF14] text-[#0A0E27] font-extrabold shadow-[0_0_16px_rgba(57,255,20,0.35)] scale-105 font-['Space_Grotesk',sans-serif]"
+                    : "text-[#8A93B5] hover:text-white hover:bg-white/5"
                 }`}
               >
                 {item.label}
@@ -55,13 +65,13 @@ export default function Navbar() {
 
         {/* Right User Badge & Controls */}
         <div className="flex items-center gap-3">
-          <button className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 transition-colors">
+          <button className="w-8 h-8 rounded-full bg-[#0B1029] hover:bg-[#161F48] border border-white/10 flex items-center justify-center text-[#8A93B5] hover:text-white transition-all">
             <Search className="w-4 h-4" />
           </button>
 
           {user ? (
-            <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 rounded-full pl-1.5 pr-3 py-1">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white font-bold text-xs flex items-center justify-center uppercase shadow-sm">
+            <div className="flex items-center gap-2.5 bg-[#0B1029] border border-white/10 rounded-full pl-1.5 pr-3 py-1 shadow-sm">
+              <div className="w-7 h-7 rounded-full bg-[#161F48] text-[#39FF14] border border-[#39FF14]/30 font-bold text-xs flex items-center justify-center uppercase shadow-sm font-['Space_Grotesk',sans-serif]">
                 {user.email ? user.email.charAt(0) : "U"}
               </div>
               <span className="text-xs font-semibold text-slate-200 hidden sm:inline max-w-[120px] truncate">
@@ -70,7 +80,7 @@ export default function Navbar() {
               <button
                 onClick={signOut}
                 title="Sign Out"
-                className="text-slate-400 hover:text-rose-400 transition-colors ml-1 p-0.5"
+                className="text-[#8A93B5] hover:text-[#FF4D6A] transition-colors ml-1 p-0.5"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -78,7 +88,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="text-xs font-bold bg-gradient-to-r from-rose-500 to-amber-500 text-white px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity shadow-md"
+              className="text-xs font-bold bg-[#39FF14] hover:bg-[#32e012] text-[#0A0E27] px-4 py-1.5 rounded-full transition-all shadow-[0_0_16px_rgba(57,255,20,0.3)] font-['Space_Grotesk',sans-serif]"
             >
               Log In
             </Link>
@@ -88,3 +98,4 @@ export default function Navbar() {
     </header>
   );
 }
+

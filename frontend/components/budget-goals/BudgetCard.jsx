@@ -2,128 +2,157 @@
 
 import React from 'react';
 import { CategoryIcon } from './CategoryIcons';
+import { Card, IconTile } from './ThemeCard';
 
 /**
- * Fintech-Style Budget Card Component
- * Conforms to the reference dark fintech aesthetic:
- * - Dark surface (#12131b) with subtle border (#1e2230)
- * - Category icon badge + Name
- * - Bold primary spent amount with visual hierarchy
- * - Electric blue progress bar with subtle status glow
- * - Muted metadata (remaining amount & percentage)
- * - Subtle Edit and Delete actions
+ * Budget Category Feature Card (CryptoVault Fintech Theme)
+ * - Feature card structure (48x48px icon tile + title + status badge)
+ * - 8px rounded progress bar with status fills:
+ *   - safe (<70%): gradient teal-to-green (#1FB5A5 to #22D36A)
+ *   - warning (70-100%): amber (#F5A524)
+ *   - over (>100%): red (#FF4D6A)
+ * - Neon green (#39FF14) used strictly for safe percentage highlight
+ * - Status conveyed by text labels and icons (never color alone)
+ * - 16px radius, #0F1633 background, 1px subtle border, translateY(-2px) hover
  */
 export default function BudgetCard({ budget, onEdit, onDeleteClick }) {
-  const { id, category, amountLimit = 0, spent = 0, percentageUsed = 0, status = 'NORMAL', remaining = 0 } = budget;
+  const {
+    id,
+    category = 'Category',
+    amountLimit = 0,
+    spent = 0,
+    percentageUsed = 0,
+    status = 'NORMAL',
+    remaining = 0,
+    period = 'monthly'
+  } = budget;
 
-  // Subtle status badge styling (restrained, dark theme, low-saturation indicators)
-  const statusStyles = {
-    NORMAL: {
-      label: 'Normal',
-      badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-      barGradient: 'from-blue-600 to-blue-400',
-      glow: 'shadow-[0_0_12px_rgba(59,130,246,0.3)]'
-    },
-    WARNING: {
-      label: 'Warning',
-      badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-      barGradient: 'from-blue-600 via-blue-500 to-amber-500',
-      glow: 'shadow-[0_0_12px_rgba(245,158,11,0.25)]'
-    },
-    CRITICAL: {
-      label: 'Critical',
-      badge: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-      barGradient: 'from-blue-600 via-orange-500 to-orange-400',
-      glow: 'shadow-[0_0_12px_rgba(249,115,22,0.3)]'
-    },
-    EXCEEDED: {
-      label: 'Exceeded',
-      badge: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-      barGradient: 'from-rose-600 to-rose-500',
-      glow: 'shadow-[0_0_12px_rgba(244,63,94,0.35)]'
-    }
-  };
+  // Determine status configuration
+  const isOver = status === 'EXCEEDED' || percentageUsed > 100;
+  const isWarning = !isOver && (status === 'WARNING' || status === 'CRITICAL' || percentageUsed >= 70);
+  const isSafe = !isOver && !isWarning;
 
-  const currentTheme = statusStyles[status] || statusStyles.NORMAL;
+  const statusConfig = isOver
+    ? {
+        label: 'Over Limit',
+        icon: '⚠️',
+        badgeClass: 'bg-[#FF4D6A]/[0.12] text-[#FF4D6A] border-[#FF4D6A]/30',
+        barFillClass: 'bg-[#FF4D6A]',
+        percentTextClass: 'text-[#FF4D6A]'
+      }
+    : isWarning
+    ? {
+        label: percentageUsed >= 90 ? 'Critical' : 'Warning',
+        icon: '⚡',
+        badgeClass: 'bg-[#F5A524]/[0.12] text-[#F5A524] border-[#F5A524]/30',
+        barFillClass: 'bg-[#F5A524]',
+        percentTextClass: 'text-[#F5A524]'
+      }
+    : {
+        label: 'Protected',
+        icon: '🛡️',
+        badgeClass: 'bg-[#22D36A]/[0.12] text-[#22D36A] border-[#22D36A]/30',
+        barFillClass: 'bg-gradient-to-r from-[#1FB5A5] to-[#22D36A]',
+        // Neon green used exclusively for safe percentage highlight
+        percentTextClass: 'text-[#39FF14]'
+      };
+
   const clampedProgress = Math.min(100, Math.max(0, percentageUsed));
 
   return (
-    <div className="p-5 rounded-2xl bg-[#12131b] border border-white/[0.07] hover:border-blue-500/40 transition-all duration-200 shadow-[0_4px_20px_rgba(0,0,0,0.4)] flex flex-col justify-between group">
+    <Card className="flex flex-col justify-between group">
       <div>
-        {/* Top Header: Icon + Category Name & Status Badge */}
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#181a24] border border-white/[0.06] flex items-center justify-center flex-shrink-0 group-hover:border-blue-500/30 transition-colors">
-              <CategoryIcon category={category} className="w-4 h-4 text-blue-400" />
+        {/* Top Header: 48x48 Icon Tile + Title + Status Pill */}
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <IconTile>
+              <CategoryIcon category={category} className="w-5 h-5 text-[#0A84FF]" />
+            </IconTile>
+            <div className="min-w-0">
+              <h3 className="font-bold text-lg text-white truncate tracking-tight">
+                {category}
+              </h3>
+              <p className="text-xs text-[#8A93B5] capitalize">
+                {period} allocation
+              </p>
             </div>
-            <h3 className="font-semibold text-base text-white truncate tracking-tight">
-              {category}
-            </h3>
           </div>
 
-          <span className={`px-2.5 py-0.5 text-[11px] font-medium rounded-full border ${currentTheme.badge} flex-shrink-0`}>
-            {currentTheme.label}
-          </span>
+          <div
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusConfig.badgeClass} flex-shrink-0`}
+          >
+            <span className="text-[11px] leading-none" aria-hidden="true">
+              {statusConfig.icon}
+            </span>
+            <span>{statusConfig.label}</span>
+          </div>
         </div>
 
-        {/* Primary Spent & Limit Visual Hierarchy */}
-        <div className="flex items-baseline justify-between mb-2">
+        {/* Primary Spent & Limit Visual Numbers */}
+        <div className="flex items-baseline justify-between mb-2.5">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-extrabold text-white tracking-tight">
+            <span className="text-2xl sm:text-[26px] font-bold text-white tracking-tight">
               ${Number(spent).toLocaleString()}
             </span>
-            <span className="text-xs text-slate-400 font-normal">
+            <span className="text-xs text-[#8A93B5]">
               / ${Number(amountLimit).toLocaleString()}
             </span>
           </div>
-          <span className="text-xs font-semibold text-blue-400">
+          <span
+            className={`text-sm font-bold tracking-tight ${statusConfig.percentTextClass}`}
+          >
             {percentageUsed}%
           </span>
         </div>
 
-        {/* Progress Bar with Electric Blue Fill */}
-        <div className="w-full bg-white/[0.06] h-2 rounded-full overflow-hidden mb-2.5">
+        {/* 8px Rounded Progress Bar with subtle track */}
+        <div className="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mb-3">
           <div
-            className={`h-full bg-gradient-to-r ${currentTheme.barGradient} rounded-full transition-all duration-500 ease-out`}
+            className={`h-full ${statusConfig.barFillClass} rounded-full transition-all duration-500 ease-out`}
             style={{ width: `${clampedProgress}%` }}
+            role="progressbar"
+            aria-valuenow={percentageUsed}
+            aria-valuemin={0}
+            aria-valuemax={100}
           />
         </div>
 
-        {/* Remaining / Over Budget Info */}
-        <div className="flex items-center justify-between text-xs text-slate-400 mb-4">
+        {/* Remaining / Over Budget Status */}
+        <div className="flex items-center justify-between text-xs text-[#8A93B5] mb-5">
           <span>
-            {status === 'EXCEEDED' ? (
-              <span className="text-rose-400 font-medium">
-                Over budget by ${(Number(spent) - Number(amountLimit)).toLocaleString()}
+            {isOver ? (
+              <span className="text-[#FF4D6A] font-semibold flex items-center gap-1">
+                <span>Exceeded by</span>
+                <span>${(Number(spent) - Number(amountLimit)).toLocaleString()}</span>
               </span>
             ) : (
-              <span>
-                ${Number(remaining).toLocaleString()} remaining
-              </span>
+              <span>${Number(remaining).toLocaleString()} available buffer</span>
             )}
           </span>
-          <span className="text-[11px] text-slate-500">
-            {100 - clampedProgress > 0 ? `${(100 - clampedProgress).toFixed(0)}% left` : 'Limit reached'}
+          <span className="text-[11px] text-[#8A93B5]">
+            {100 - clampedProgress > 0 ? `${(100 - clampedProgress).toFixed(0)}% left` : 'Cap reached'}
           </span>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.05] text-xs">
+      {/* Action Buttons: Minimalist & Clean */}
+      <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/[0.06] text-xs">
         <button
+          type="button"
           onClick={() => onEdit(budget)}
-          className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white font-medium transition flex items-center gap-1.5"
+          className="px-3 py-1.5 rounded-[10px] bg-white/[0.04] hover:bg-white/[0.08] text-[#8A93B5] hover:text-white font-medium transition-colors duration-150 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#0A84FF]"
           title="Edit budget category"
         >
-          <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <svg className="w-3.5 h-3.5 text-[#0A84FF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
           </svg>
           Edit
         </button>
 
         <button
+          type="button"
           onClick={() => onDeleteClick(budget)}
-          className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 font-medium transition flex items-center gap-1.5"
+          className="px-3 py-1.5 rounded-[10px] bg-[#FF4D6A]/[0.10] hover:bg-[#FF4D6A]/[0.18] text-[#FF4D6A] font-medium transition-colors duration-150 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#FF4D6A]"
           title="Delete budget category"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -132,6 +161,7 @@ export default function BudgetCard({ budget, onEdit, onDeleteClick }) {
           Delete
         </button>
       </div>
-    </div>
+    </Card>
   );
 }
+

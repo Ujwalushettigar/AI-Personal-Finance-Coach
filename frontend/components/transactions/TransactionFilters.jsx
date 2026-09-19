@@ -17,6 +17,13 @@ const CATEGORY_OPTIONS = [
   'Other'
 ];
 
+/**
+ * Transaction Filters (CryptoVault Fintech Theme)
+ * - #0F1633 card background, 16px radius, subtle border
+ * - Search input with #0B1029 surface and blue focus ring
+ * - Toggle pills with #0A84FF active state
+ * - Category dropdown with dark surface
+ */
 export default function TransactionFilters({ filters, onFilterChange, onReset }) {
   const handleChange = (key, value) => {
     onFilterChange({
@@ -28,27 +35,11 @@ export default function TransactionFilters({ filters, onFilterChange, onReset })
   const hasActiveFilters = Boolean(filters.search || filters.type || filters.category);
 
   return (
-    <div
-      style={{
-        background: 'rgba(17, 24, 39, 0.65)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.07)',
-        borderRadius: '16px',
-        padding: '16px 20px',
-        marginBottom: '24px',
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '12px',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.25)'
-      }}
-    >
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', flex: 1, minWidth: '300px' }}>
+    <div className="bg-[#0F1633] border border-white/[0.06] rounded-[16px] p-4 sm:p-5 mb-6 flex flex-wrap gap-3 items-center justify-between">
+      <div className="flex flex-wrap gap-3 flex-1 min-w-[300px]">
         {/* Search Input with Icon */}
-        <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', display: 'flex' }}>
+        <div className="flex-1 min-w-[220px] relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A93B5] flex">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </span>
           <input
@@ -56,22 +47,12 @@ export default function TransactionFilters({ filters, onFilterChange, onReset })
             placeholder="Search transactions, merchants..."
             value={filters.search || ''}
             onChange={(e) => handleChange('search', e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 14px 10px 36px',
-              borderRadius: '10px',
-              background: 'rgba(15, 23, 42, 0.7)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              color: '#f8fafc',
-              fontSize: '13px',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
+            className="w-full py-2.5 px-3.5 pl-9 rounded-[12px] bg-[#0B1029] border border-white/[0.08] text-white text-sm placeholder-[#8A93B5]/50 focus:outline-none focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/40 transition"
           />
         </div>
 
         {/* Type Toggle Pills */}
-        <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.7)', padding: '3px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+        <div className="flex items-center p-1 rounded-[12px] bg-[#0B1029] border border-white/[0.06]">
           {[
             { label: 'All', value: '' },
             { label: 'Expenses', value: 'expense' },
@@ -83,17 +64,11 @@ export default function TransactionFilters({ filters, onFilterChange, onReset })
                 key={item.label}
                 type="button"
                 onClick={() => handleChange('type', item.value)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '7px',
-                  border: 'none',
-                  background: active ? 'rgba(99, 102, 241, 0.3)' : 'transparent',
-                  color: active ? '#818cf8' : '#94a3b8',
-                  fontSize: '12px',
-                  fontWeight: active ? '600' : '500',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
+                className={`px-3.5 py-1.5 rounded-[10px] text-xs font-medium transition-all duration-150 ${
+                  active
+                    ? 'bg-[#0A84FF] text-white font-semibold shadow-[0_0_12px_rgba(10,132,255,0.4)]'
+                    : 'text-[#8A93B5] hover:text-white'
+                }`}
               >
                 {item.label}
               </button>
@@ -102,25 +77,15 @@ export default function TransactionFilters({ filters, onFilterChange, onReset })
         </div>
 
         {/* Category Dropdown */}
-        <div style={{ width: '160px' }}>
+        <div className="w-[160px]">
           <select
             value={filters.category || ''}
             onChange={(e) => handleChange('category', e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: '10px',
-              background: 'rgba(15, 23, 42, 0.7)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              color: '#f8fafc',
-              fontSize: '13px',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
+            className="w-full py-2.5 px-3 rounded-[12px] bg-[#0B1029] border border-white/[0.08] text-white text-sm focus:outline-none focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/40 transition"
           >
-            <option value="" style={{ background: '#0f172a', color: '#94a3b8' }}>All Categories</option>
+            <option value="" className="bg-[#0B1029] text-[#8A93B5]">All Categories</option>
             {CATEGORY_OPTIONS.map((c) => (
-              <option key={c} value={c} style={{ background: '#0f172a', color: '#f8fafc' }}>
+              <option key={c} value={c} className="bg-[#0B1029] text-white">
                 {c}
               </option>
             ))}
@@ -133,19 +98,7 @@ export default function TransactionFilters({ filters, onFilterChange, onReset })
         <button
           type="button"
           onClick={onReset}
-          style={{
-            padding: '8px 14px',
-            borderRadius: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'rgba(255, 255, 255, 0.05)',
-            color: '#94a3b8',
-            fontSize: '12px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
+          className="px-3.5 py-2 rounded-[10px] border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] text-[#8A93B5] hover:text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#0A84FF]"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           Clear Filters
@@ -154,3 +107,4 @@ export default function TransactionFilters({ filters, onFilterChange, onReset })
     </div>
   );
 }
+

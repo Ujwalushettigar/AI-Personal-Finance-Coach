@@ -7,11 +7,24 @@ import BudgetCard from '../../components/budget-goals/BudgetCard';
 import BudgetFormModal from '../../components/budget-goals/BudgetFormModal';
 import DeleteConfirmModal from '../../components/budget-goals/DeleteConfirmModal';
 import BudgetSkeleton from '../../components/budget-goals/BudgetSkeleton';
+import GoalCard from '../../components/budget-goals/GoalCard';
+import GoalFormModal from '../../components/budget-goals/GoalFormModal';
 import HealthScoreDashboard from '../../components/health-score/HealthScoreDashboard';
 import HealthScoreSkeleton from '../../components/health-score/HealthScoreSkeleton';
+import { Card, BadgePill, PrimaryButton } from '../../components/budget-goals/ThemeCard';
 
+/**
+ * Budget & Financial Health Page (CryptoVault Fintech Theme)
+ * --bg-base: #0A0E27 (Very dark navy background)
+ * --bg-card: #0F1633
+ * --border-subtle: rgba(255,255,255,0.06)
+ * --text-primary: #FFFFFF
+ * --text-muted: #8A93B5
+ * --blue: #0A84FF
+ * --green-neon: #39FF14
+ */
 export default function BudgetPage() {
-  // Navigation Tabs: 'BUDGETS' | 'HEALTH_SCORE'
+  // Navigation Tabs: 'BUDGETS' | 'GOALS' | 'HEALTH_SCORE'
   const [activeTab, setActiveTab] = useState('BUDGETS');
 
   // Budget Data State
@@ -20,12 +33,16 @@ export default function BudgetPage() {
   const [budgetError, setBudgetError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('ALL');
 
+  // Savings Goals Data State
+  const [goalsData, setGoalsData] = useState([]);
+  const [loadingGoals, setLoadingGoals] = useState(true);
+
   // Health Score State (Directly sourced from backend healthScoreEngine)
   const [healthScoreData, setHealthScoreData] = useState(null);
   const [loadingHealth, setLoadingHealth] = useState(true);
   const [healthError, setHealthError] = useState(null);
 
-  // Modals state
+  // Budget Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
 
@@ -33,7 +50,12 @@ export default function BudgetPage() {
   const [budgetToDelete, setBudgetToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fallback data for seamless offline/standalone demo experience
+  // Goal Modals state
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [goalModalMode, setGoalModalMode] = useState('create');
+
+  // Fallback budget data for seamless offline/standalone demo experience
   const fallbackBudgetsData = {
     summary: {
       totalLimit: 2850,
@@ -52,6 +74,14 @@ export default function BudgetPage() {
     ]
   };
 
+  // Fallback savings goals
+  const fallbackGoalsData = [
+    { id: 'g-1', title: 'Emergency Reserve', targetAmount: 10000, currentAmount: 6800, remainingAmount: 3200, progressPercentage: 68, targetDate: '2026-12-31', requiredMonthlyContribution: 800, category: 'Safety' },
+    { id: 'g-2', title: 'Cold Storage Vault', targetAmount: 500, currentAmount: 500, remainingAmount: 0, progressPercentage: 100, targetDate: '2026-08-15', requiredMonthlyContribution: 0, category: 'Security' },
+    { id: 'g-3', title: 'Tax Reserve 2027', targetAmount: 4000, currentAmount: 2200, remainingAmount: 1800, progressPercentage: 55, targetDate: '2027-03-31', requiredMonthlyContribution: 300, category: 'Tax' }
+  ];
+
+  // Fallback health evaluation
   const fallbackHealthData = {
     score: 78,
     grade: 'Good',
@@ -62,16 +92,16 @@ export default function BudgetPage() {
       goals: 15
     },
     strengths: [
-      "Healthy savings rate of 21.4%, meeting the 50/30/20 standard.",
-      "Steady, predictable spending distribution across standard categories."
+      "Healthy savings rate of 21.4%, exceeding baseline reserve requirements.",
+      "Predictable, low-volatility spending distribution across standard categories."
     ],
     warnings: [
-      "1 category budget exceeded: Transportation.",
-      "Entertainment & Dining is approaching limit (95% used)."
+      "1 category allocation exceeded: Transportation.",
+      "Entertainment & Dining is approaching ceiling (95% used)."
     ],
     recommendations: [
       "Pause discretionary spend in Transportation until next cycle.",
-      "Review recurring dining expenditures to boost your monthly savings buffer."
+      "Audit recurring dining debits to expand your monthly reserve buffer."
     ]
   };
 
@@ -91,6 +121,23 @@ export default function BudgetPage() {
       setBudgetsData(fallbackBudgetsData);
     } finally {
       setLoadingBudgets(false);
+    }
+  }, []);
+
+  // Fetch savings goals
+  const fetchGoals = useCallback(async () => {
+    setLoadingGoals(true);
+    try {
+      const response = await budgetApi.getGoals();
+      if (response && response.data) {
+        setGoalsData(response.data);
+      } else {
+        setGoalsData(fallbackGoalsData);
+      }
+    } catch (err) {
+      setGoalsData(fallbackGoalsData);
+    } finally {
+      setLoadingGoals(false);
     }
   }, []);
 
@@ -115,8 +162,9 @@ export default function BudgetPage() {
 
   useEffect(() => {
     fetchBudgets();
+    fetchGoals();
     fetchHealthScore();
-  }, [fetchBudgets, fetchHealthScore]);
+  }, [fetchBudgets, fetchGoals, fetchHealthScore]);
 
   // Create or Update Budget Handler
   const handleSaveBudget = async (formData) => {
@@ -182,6 +230,53 @@ export default function BudgetPage() {
     }
   };
 
+  // Savings Goal Handlers
+  const handleSaveGoal = async (goalFormData) => {
+    try {
+      if (editingGoal) {
+        await budgetApi.updateGoal(editingGoal.id, goalFormData);
+      } else {
+        await budgetApi.createGoal(goalFormData);
+      }
+      await fetchGoals();
+      await fetchHealthScore();
+    } catch (err) {
+      if (editingGoal) {
+        setGoalsData(prev => prev.map(g => g.id === editingGoal.id ? {
+          ...g,
+          ...goalFormData,
+          remainingAmount: Math.max(0, goalFormData.targetAmount - goalFormData.currentAmount),
+          progressPercentage: Math.round((goalFormData.currentAmount / goalFormData.targetAmount) * 100)
+        } : g));
+      } else {
+        const newGoal = {
+          id: `g-${Date.now()}`,
+          ...goalFormData,
+          remainingAmount: Math.max(0, goalFormData.targetAmount - goalFormData.currentAmount),
+          progressPercentage: Math.round((goalFormData.currentAmount / goalFormData.targetAmount) * 100),
+          requiredMonthlyContribution: Math.round(goalFormData.targetAmount / 6)
+        };
+        setGoalsData(prev => [...prev, newGoal]);
+      }
+    }
+  };
+
+  const handleDeleteGoal = async (goalId) => {
+    try {
+      await budgetApi.deleteGoal(goalId);
+      await fetchGoals();
+      await fetchHealthScore();
+    } catch (err) {
+      setGoalsData(prev => prev.filter(g => g.id !== goalId));
+    }
+  };
+
+  const handleAddFunds = (goal) => {
+    setEditingGoal(goal);
+    setGoalModalMode('addFunds');
+    setIsGoalModalOpen(true);
+  };
+
   // Filter category budgets by status
   const filteredBudgets = (budgetsData.budgets || []).filter(b => {
     if (filterStatus === 'ALL') return true;
@@ -189,44 +284,66 @@ export default function BudgetPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0b10] text-slate-100 p-4 sm:p-8 space-y-8 font-sans antialiased">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#0A0E27] text-white p-4 sm:p-8 space-y-10 antialiased">
+      <div className="max-w-[1216px] mx-auto space-y-10">
 
-        {/* Top Control Bar: Title & Tab Switcher */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/[0.06] pb-5">
+        {/* ------------------------------------------------------------- */}
+        {/* TOP CONTROL BAR: TITLE & TAB SWITCHER                         */}
+        {/* ------------------------------------------------------------- */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/[0.06] pb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <BadgePill icon="⚡" text="Asset Telemetry & Reserve Management" className="mb-2" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
               Financial Control Center
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Deterministic health scoring & category budget tracking
+            <p className="text-xs sm:text-sm text-[#8A93B5] mt-1 font-normal">
+              Live budget allocations, milestone reserves, and deterministic scoring.
             </p>
           </div>
 
-          {/* Fintech View Toggle Switcher */}
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-[#12131b] border border-white/[0.08] text-xs font-semibold self-start sm:self-auto">
+          {/* CryptoVault Styled Tab Switcher */}
+          <div className="flex items-center gap-1.5 p-1 rounded-[12px] bg-[#0F1633] border border-white/[0.08] text-xs font-semibold self-start sm:self-auto">
             <button
+              type="button"
               onClick={() => setActiveTab('BUDGETS')}
-              className={`px-4 py-2 rounded-xl transition-all ${
+              className={`px-4 py-2 rounded-[10px] transition-all duration-150 ${
                 activeTab === 'BUDGETS'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_16px_rgba(37,99,235,0.4)] font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#0A84FF] text-white shadow-[0_0_16px_rgba(10,132,255,0.4)] font-bold'
+                  : 'text-[#8A93B5] hover:text-white'
               }`}
             >
               Category Budgets
             </button>
 
             <button
+              type="button"
+              onClick={() => setActiveTab('GOALS')}
+              className={`px-4 py-2 rounded-[10px] transition-all duration-150 flex items-center gap-1.5 ${
+                activeTab === 'GOALS'
+                  ? 'bg-[#0A84FF] text-white shadow-[0_0_16px_rgba(10,132,255,0.4)] font-bold'
+                  : 'text-[#8A93B5] hover:text-white'
+              }`}
+            >
+              <span>Savings Goals</span>
+              {goalsData.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-white/[0.1] text-[10px] text-white">
+                  {goalsData.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
               onClick={() => setActiveTab('HEALTH_SCORE')}
-              className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-[10px] transition-all duration-150 flex items-center gap-1.5 ${
                 activeTab === 'HEALTH_SCORE'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_16px_rgba(37,99,235,0.4)] font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#0A84FF] text-white shadow-[0_0_16px_rgba(10,132,255,0.4)] font-bold'
+                  : 'text-[#8A93B5] hover:text-white'
               }`}
             >
               <span>Health Score</span>
               {healthScoreData && (
-                <span className="px-1.5 py-0.2 rounded-full bg-white/[0.1] text-[10px] text-blue-300">
+                <span className="px-1.5 py-0.2 rounded-full bg-[#39FF14]/[0.15] text-[10px] text-[#39FF14] font-bold">
                   {healthScoreData.score}
                 </span>
               )}
@@ -238,8 +355,8 @@ export default function BudgetPage() {
         {/* TAB 1: CATEGORY BUDGETS DASHBOARD                             */}
         {/* ------------------------------------------------------------- */}
         {activeTab === 'BUDGETS' && (
-          <div className="space-y-8 animate-fadeIn">
-            {/* 1. Budget Overview Section */}
+          <div className="space-y-10 animate-fadeIn">
+            {/* 1. Stats Panel & Overview Header */}
             <BudgetOverview
               summary={budgetsData.summary || {}}
               onCreateBudget={() => {
@@ -250,16 +367,17 @@ export default function BudgetPage() {
 
             {/* Error State Banner */}
             {budgetError && (
-              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 flex items-center justify-between gap-4">
+              <div className="p-4 rounded-[12px] bg-[#FF4D6A]/[0.10] border border-[#FF4D6A]/30 text-[#FF4D6A] flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm">
-                  <svg className="w-5 h-5 text-rose-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   <span>{budgetError}</span>
                 </div>
                 <button
+                  type="button"
                   onClick={fetchBudgets}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition"
+                  className="px-3.5 py-1.5 rounded-[10px] bg-[#FF4D6A] text-white text-xs font-semibold transition hover:brightness-110"
                 >
                   Try Again
                 </button>
@@ -267,27 +385,30 @@ export default function BudgetPage() {
             )}
 
             {/* 2. Category Budgets Header & Filter Pills */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-white/[0.06]">
               <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">Category Budgets</h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Live spending tracking across defined expense caps
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  Allocated Categories
+                </h2>
+                <p className="text-xs sm:text-sm text-[#8A93B5] mt-0.5">
+                  Individual spending limits and live reserve thresholds
                 </p>
               </div>
 
               {/* Status Filter Tabs */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#12131b] border border-white/[0.06] text-xs font-medium self-start sm:self-auto overflow-x-auto max-w-full">
+              <div className="flex items-center gap-1.5 p-1 rounded-[12px] bg-[#0F1633] border border-white/[0.06] text-xs font-medium self-start sm:self-auto overflow-x-auto max-w-full">
                 {['ALL', 'NORMAL', 'WARNING', 'CRITICAL', 'EXCEEDED'].map((st) => (
                   <button
                     key={st}
+                    type="button"
                     onClick={() => setFilterStatus(st)}
-                    className={`px-3 py-1.5 rounded-lg transition-all text-xs ${
+                    className={`px-3 py-1.5 rounded-[10px] transition-all duration-150 text-xs ${
                       filterStatus === st
-                        ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(37,99,235,0.4)]'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                        ? 'bg-[#0A84FF] text-white font-semibold shadow-[0_0_12px_rgba(10,132,255,0.4)]'
+                        : 'text-[#8A93B5] hover:text-white hover:bg-white/[0.04]'
                     }`}
                   >
-                    {st}
+                    {st === 'NORMAL' ? 'SAFE' : st}
                   </button>
                 ))}
               </div>
@@ -297,41 +418,41 @@ export default function BudgetPage() {
             {loadingBudgets ? (
               <BudgetSkeleton />
             ) : filteredBudgets.length === 0 ? (
-              <div className="py-16 px-6 text-center rounded-3xl bg-[#12131b] border border-white/[0.06] flex flex-col items-center justify-center max-w-lg mx-auto">
-                <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+              <Card hover={false} className="py-16 px-6 text-center flex flex-col items-center justify-center max-w-md mx-auto">
+                <div className="w-14 h-14 rounded-[12px] bg-[#0A84FF]/[0.12] border border-[#0A84FF]/30 text-[#0A84FF] flex items-center justify-center mb-4">
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1">
-                  {filterStatus === 'ALL' ? 'No budgets yet' : `No ${filterStatus.toLowerCase()} budgets`}
+                  {filterStatus === 'ALL' ? 'No Budgets Configured' : `No ${filterStatus.toLowerCase()} budgets`}
                 </h3>
-                <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
+                <p className="text-xs text-[#8A93B5] max-w-sm mb-6 leading-relaxed">
                   {filterStatus === 'ALL'
-                    ? 'Create your first category budget to start tracking your spending.'
-                    : `There are currently no categories matching the ${filterStatus} threshold.`}
+                    ? 'Define your first category ceiling to establish spending guardrails.'
+                    : `Zero categories currently match the ${filterStatus} threshold.`}
                 </p>
                 {filterStatus === 'ALL' ? (
-                  <button
+                  <PrimaryButton
                     onClick={() => {
                       setEditingBudget(null);
                       setIsFormModalOpen(true);
                     }}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-[0_0_18px_rgba(37,99,235,0.4)] transition"
                   >
                     + Create Budget
-                  </button>
+                  </PrimaryButton>
                 ) : (
                   <button
+                    type="button"
                     onClick={() => setFilterStatus('ALL')}
-                    className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-medium transition"
+                    className="px-4 py-2 rounded-[12px] bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs font-medium transition"
                   >
-                    Clear Filter
+                    Reset Filter
                   </button>
                 )}
-              </div>
+              </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredBudgets.map(budget => (
                   <BudgetCard
                     key={budget.id}
@@ -349,7 +470,83 @@ export default function BudgetPage() {
         )}
 
         {/* ------------------------------------------------------------- */}
-        {/* TAB 2: FINANCIAL HEALTH SCORE DASHBOARD                       */}
+        {/* TAB 2: SAVINGS GOALS DASHBOARD                                */}
+        {/* ------------------------------------------------------------- */}
+        {activeTab === 'GOALS' && (
+          <div className="space-y-8 animate-fadeIn">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <BadgePill icon="🎯" text="Reserve Target Milestones" className="mb-2" />
+                <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                  Savings <span className="bg-gradient-to-r from-[#0A84FF] via-[#22D36A] to-[#39FF14] bg-clip-text text-transparent">Goals</span>
+                </h2>
+                <p className="text-xs sm:text-sm text-[#8A93B5] mt-1">
+                  Track progress towards dedicated capital milestones and long-term targets.
+                </p>
+              </div>
+
+              <PrimaryButton
+                onClick={() => {
+                  setEditingGoal(null);
+                  setGoalModalMode('create');
+                  setIsGoalModalOpen(true);
+                }}
+              >
+                + New Goal
+              </PrimaryButton>
+            </div>
+
+            {/* Goals Grid */}
+            {loadingGoals ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+                {[1, 2, 3].map(idx => (
+                  <div key={idx} className="p-6 rounded-[16px] bg-[#0F1633] border border-white/[0.06] h-60" />
+                ))}
+              </div>
+            ) : goalsData.length === 0 ? (
+              <Card hover={false} className="py-16 px-6 text-center flex flex-col items-center justify-center max-w-md mx-auto">
+                <div className="w-14 h-14 rounded-[12px] bg-[#0A84FF]/[0.12] border border-[#0A84FF]/30 text-[#0A84FF] flex items-center justify-center mb-4">
+                  🎯
+                </div>
+                <h3 className="text-lg font-bold text-white mb-1">
+                  No Savings Goals Yet
+                </h3>
+                <p className="text-xs text-[#8A93B5] mb-6">
+                  Create your first milestone target to begin tracking reserve accumulation.
+                </p>
+                <PrimaryButton
+                  onClick={() => {
+                    setEditingGoal(null);
+                    setGoalModalMode('create');
+                    setIsGoalModalOpen(true);
+                  }}
+                >
+                  + Create First Goal
+                </PrimaryButton>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {goalsData.map(goal => (
+                  <GoalCard
+                    key={goal.id}
+                    goal={goal}
+                    onEdit={(g) => {
+                      setEditingGoal(g);
+                      setGoalModalMode('edit');
+                      setIsGoalModalOpen(true);
+                    }}
+                    onDelete={handleDeleteGoal}
+                    onAddFunds={handleAddFunds}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* TAB 3: FINANCIAL HEALTH SCORE DASHBOARD                       */}
         {/* ------------------------------------------------------------- */}
         {activeTab === 'HEALTH_SCORE' && (
           <div className="space-y-6 animate-fadeIn">
@@ -390,6 +587,19 @@ export default function BudgetPage() {
         budgetCategory={budgetToDelete?.category}
         isDeleting={isDeleting}
       />
+
+      {/* Savings Goal Modal (Create / Edit / Add Funds) */}
+      <GoalFormModal
+        isOpen={isGoalModalOpen}
+        onClose={() => {
+          setIsGoalModalOpen(false);
+          setEditingGoal(null);
+        }}
+        onSubmit={handleSaveGoal}
+        initialData={editingGoal}
+        mode={goalModalMode}
+      />
     </div>
   );
 }
+

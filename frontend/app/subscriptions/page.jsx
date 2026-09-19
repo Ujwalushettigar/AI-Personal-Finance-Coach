@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { detectSubscriptions, getSubscriptions } from '../../services/api/subscriptions';
+import { Card, BadgePill, Tile, IconTile, PrimaryButton } from '../../components/budget-goals/ThemeCard';
+import SubscriptionCard from '../../components/subscriptions/SubscriptionCard';
+import LeakCard from '../../components/subscriptions/LeakCard';
+import SubscriptionSkeleton from '../../components/subscriptions/SubscriptionSkeleton';
 
+/* ─────────────────────────────────────────────────────────
+   Fallback data — identical to original, zero logic changes
+   ───────────────────────────────────────────────────────── */
 const fallbackData = {
 	summary: { totalSubscriptions: 4, monthlyCost: 110.15, yearlyCost: 1321.8 },
 	subscriptions: [
@@ -23,18 +30,38 @@ const fallbackData = {
 	],
 };
 
+/* ─────────────────────────────────────────────────────────
+   Helpers — identical to original
+   ───────────────────────────────────────────────────────── */
 const money = (value) => `$${Number(value || 0).toFixed(2)}`;
 const dateLabel = (value) => value ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not available';
 
-function MetricCard({ label, value, detail, accent }) {
-	return <div style={{ ...styles.metricCard, borderTopColor: accent }}><span style={styles.metricLabel}>{label}</span><strong style={styles.metricValue}>{value}</strong><span style={styles.metricDetail}>{detail}</span></div>;
+/* ─────────────────────────────────────────────────────────
+   Confidence Badge (local sub-component)
+   ───────────────────────────────────────────────────────── */
+function ConfidenceBadge({ value }) {
+  const isHigh = value >= 80;
+  const isMedium = value >= 60 && value < 80;
+
+  const badgeClass = isHigh
+    ? 'text-[#22D36A] bg-[#22D36A]/[0.12] border-[#22D36A]/30'
+    : isMedium
+    ? 'text-[#F5A524] bg-[#F5A524]/[0.12] border-[#F5A524]/30'
+    : 'text-[#FF4D6A] bg-[#FF4D6A]/[0.12] border-[#FF4D6A]/30';
+
+  const label = isHigh ? 'High' : isMedium ? 'Medium' : 'Low';
+
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeClass}`}>
+      {label} · {value}%
+    </span>
+  );
 }
 
-function Confidence({ value }) {
-	const color = value >= 80 ? '#16a36a' : value >= 60 ? '#d48a1f' : '#d94c58';
-	return <span style={{ ...styles.confidence, color, background: `${color}18` }}>{value}% confidence</span>;
-}
-
+/* ═════════════════════════════════════════════════════════
+   MAIN PAGE COMPONENT
+   All state, effects, handlers, API calls IDENTICAL to original
+   ═════════════════════════════════════════════════════════ */
 export default function SubscriptionsPage() {
 	const [data, setData] = useState(fallbackData);
 	const [loading, setLoading] = useState(true);
@@ -77,60 +104,367 @@ export default function SubscriptionsPage() {
 		}
 	}
 
-	return <main style={styles.page}>
-		<div style={styles.shell}>
-			<header style={styles.header}>
-				<div><div style={styles.eyebrow}>FINPILOT / SPENDING INTELLIGENCE</div><h1 style={styles.title}>Subscriptions</h1><p style={styles.subtitle}>See every recurring payment, what it costs, and where your money may be quietly leaking.</p></div>
-				<div style={styles.status}>{loading ? 'Analyzing transactions…' : usingDemo ? 'Demo insights · API offline' : 'Live transaction analysis'}<span style={{ ...styles.statusDot, background: usingDemo ? '#d48a1f' : '#16a36a' }} /></div>
-			</header>
+	/* ───────────────────────────────────────────────────────
+	   RENDER — CryptoVault Dark Fintech Theme
+	   ─────────────────────────────────────────────────────── */
+	return (
+		<div className="min-h-screen bg-[#0A0E27] text-white p-4 sm:p-8 space-y-10 antialiased">
+			<div className="max-w-[1216px] mx-auto space-y-10">
 
-			<section style={styles.metrics}>
-				<MetricCard label="Detected subscriptions" value={summary.totalSubscriptions ?? subscriptions.length} detail="Recurring merchants" accent="#5b6cf5" />
-				<MetricCard label="Monthly commitment" value={money(summary.monthlyCost)} detail="Average monthly spend" accent="#16a36a" />
-				<MetricCard label="Yearly commitment" value={money(summary.yearlyCost)} detail="Projected annual cost" accent="#d48a1f" />
-				<MetricCard label="Potential monthly leaks" value={money(savings)} detail={`${leaks.length} item${leaks.length === 1 ? '' : 's'} worth reviewing`} accent="#d94c58" />
-			</section>
+				{/* ═══════════════════════════════════════════════════
+				    HEADER: Badge Pill + Section Heading + Status
+				    ═══════════════════════════════════════════════════ */}
+				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-white/[0.06] pb-6">
+					<div>
+						<BadgePill icon="🔍" text="Spending Intelligence" className="mb-3" />
+						<h1 className="text-3xl sm:text-4xl md:text-[44px] font-bold text-white tracking-tight leading-[1.15]">
+							Subscription{' '}
+							<span className="bg-gradient-to-r from-[#0A84FF] via-[#22D36A] to-[#39FF14] bg-clip-text text-transparent">
+								Intelligence
+							</span>
+						</h1>
+						<p className="text-sm sm:text-base text-[#8A93B5] mt-2 max-w-xl leading-relaxed">
+							See every recurring payment, what it costs, and where your money may be quietly leaking.
+						</p>
+					</div>
 
-			<section style={styles.reviewPanel}>
-				<div style={styles.reviewCopy}><div style={styles.reviewIcon}>?</div><div><h2 style={styles.panelTitle}>Which subscriptions do you rarely use?</h2><p style={styles.panelHint}>Select anything you do not use often. We will flag it as a potential money leak for review.</p></div></div>
-				<div style={styles.reviewOptions}>{subscriptions.map((subscription) => <label key={subscription.id} style={{ ...styles.reviewOption, ...(rarelyUsedIds.includes(subscription.id) ? styles.reviewOptionSelected : {}) }}><input type="checkbox" checked={rarelyUsedIds.includes(subscription.id)} onChange={() => toggleRarelyUsed(subscription.id)} style={styles.checkbox} /><span style={styles.reviewMerchant}>{subscription.merchant}</span><span style={styles.reviewAmount}>{money(subscription.monthlyCost)}/mo</span></label>)}</div>
-				<div style={styles.reviewAction}><button type="button" onClick={reviewRarelyUsed} disabled={!rarelyUsedIds.length || reviewing} style={{ ...styles.reviewButton, opacity: !rarelyUsedIds.length || reviewing ? .55 : 1 }}>{reviewing ? 'Reviewing…' : `Review selected${rarelyUsedIds.length ? ` (${rarelyUsedIds.length})` : ''}`}</button>{reviewMessage && <span style={styles.reviewMessage}>{reviewMessage}</span>}</div>
-			</section>
-
-			<section style={styles.contentGrid}>
-				<div style={styles.panel}><div style={styles.panelHeader}><div><h2 style={styles.panelTitle}>Your subscriptions</h2><p style={styles.panelHint}>Recurring payments with a predictable cadence</p></div><span style={styles.count}>{subscriptions.length}</span></div>
-					<div style={styles.subscriptionList}>{subscriptions.map((subscription) => <article key={subscription.id} style={styles.subscriptionRow}>
-						<div style={styles.merchantIcon}>{subscription.merchant.slice(0, 1).toUpperCase()}</div><div style={styles.subscriptionMain}><div style={styles.merchantName}>{subscription.merchant}</div><div style={styles.meta}>{subscription.cadence} · {money(subscription.amount)} per cycle · next {dateLabel(subscription.nextExpectedPayment)}</div><div style={styles.progress}><span style={{ ...styles.progressBar, width: `${Math.min(100, subscription.confidence)}%` }} /></div></div><div style={styles.subscriptionCost}><strong style={styles.subscriptionCostStrong}>{money(subscription.monthlyCost)}</strong><span style={styles.subscriptionCostLabel}>per month</span><Confidence value={subscription.confidence} /></div>
-					</article>)}</div>
+					{/* Live / Demo Status Indicator */}
+					<div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[#0F1633] border border-white/[0.06] text-xs font-medium flex-shrink-0">
+						<span className={`w-2 h-2 rounded-full flex-shrink-0 ${usingDemo ? 'bg-[#F5A524]' : 'bg-[#22D36A]'}`} />
+						<span className="text-[#8A93B5]">
+							{loading ? 'Analyzing transactions…' : usingDemo ? 'Demo insights · API offline' : 'Live transaction analysis'}
+						</span>
+					</div>
 				</div>
 
-				<aside style={styles.panel}><div style={styles.panelHeader}><div><h2 style={styles.panelTitle}>Potential leaks</h2><p style={styles.panelHint}>Recurring expenses that deserve a second look</p></div><span style={{ ...styles.count, color: '#d94c58', background: '#fff0f1' }}>{leaks.length}</span></div><div>{leaks.length ? leaks.map((leak) => <article key={leak.id} style={styles.leakRow}><div style={styles.leakTop}><span style={{ ...styles.severity, color: leak.severity === 'high' ? '#d94c58' : '#d48a1f' }}>{leak.severity} priority</span><strong>{leak.merchant}</strong><span style={styles.leakCost}>{money(leak.monthlyCost)}/mo</span></div><p style={styles.reason}>{leak.reasons?.join(' · ')}</p><div style={styles.savings}>Could save about <strong>{money(leak.potentialMonthlySavings)}/mo</strong></div></article>) : <p style={styles.empty}>No potential leaks detected. Nice work!</p>}</div></aside>
-			</section>
+				{/* Show skeleton while loading */}
+				{loading ? (
+					<SubscriptionSkeleton />
+				) : (
+					<>
+						{/* ═══════════════════════════════════════════════════
+						    STATS PANEL — 4-column metric grid
+						    ═══════════════════════════════════════════════════ */}
+						<div className="bg-[#0F1633] border border-white/[0.06] rounded-[16px] p-6 sm:p-8 hover:border-[#0A84FF]/25 transition-all duration-200">
+							<div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.06]">
 
-			<section style={styles.panel}><div style={styles.panelHeader}><div><h2 style={styles.panelTitle}>Recurring expenses</h2><p style={styles.panelHint}>Every repeated expense pattern found in your transaction history</p></div><span style={styles.count}>{recurring.length}</span></div><div style={styles.tableWrap}><table style={styles.table}><thead><tr><th>Merchant</th><th>Pattern</th><th>Typical payment</th><th>Next payment</th><th>Confidence</th></tr></thead><tbody>{recurring.map((item) => <tr key={item.id}><td style={styles.tableMerchant}>{item.merchant}</td><td style={styles.capitalize}>{item.cadence}</td><td>{money(item.amount)}</td><td>{dateLabel(item.nextExpectedPayment)}</td><td><Confidence value={item.confidence} /></td></tr>)}</tbody></table></div></section>
-			<footer style={styles.footer}>Confidence is based on payment timing, amount consistency, and transaction history. Always confirm a subscription before cancelling it.</footer>
+								{/* Stat 1: Detected Subscriptions */}
+								<div className="pt-4 lg:pt-0 lg:px-4 first:lg:pl-0 flex flex-col justify-between">
+									<span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+										Detected
+									</span>
+									<div className="mt-2">
+										<div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#1FB5A5] to-[#22D36A] bg-clip-text text-transparent tracking-tight">
+											{summary.totalSubscriptions ?? subscriptions.length}
+										</div>
+										<div className="text-sm font-semibold text-white mt-1">
+											Active Subscriptions
+										</div>
+										<div className="text-xs text-[#8A93B5] mt-0.5">
+											Recurring merchants
+										</div>
+									</div>
+								</div>
+
+								{/* Stat 2: Monthly Cost */}
+								<div className="pt-4 lg:pt-0 lg:px-6 flex flex-col justify-between">
+									<span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+										Monthly Outflow
+									</span>
+									<div className="mt-2">
+										<div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#1FB5A5] to-[#22D36A] bg-clip-text text-transparent tracking-tight">
+											{money(summary.monthlyCost)}
+										</div>
+										<div className="text-sm font-semibold text-white mt-1">
+											Monthly Commitment
+										</div>
+										<div className="text-xs text-[#8A93B5] mt-0.5">
+											Average monthly spend
+										</div>
+									</div>
+								</div>
+
+								{/* Stat 3: Yearly Cost */}
+								<div className="pt-4 lg:pt-0 lg:px-6 flex flex-col justify-between">
+									<span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+										Annual Projection
+									</span>
+									<div className="mt-2">
+										<div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#1FB5A5] to-[#22D36A] bg-clip-text text-transparent tracking-tight">
+											{money(summary.yearlyCost)}
+										</div>
+										<div className="text-sm font-semibold text-white mt-1">
+											Yearly Commitment
+										</div>
+										<div className="text-xs text-[#8A93B5] mt-0.5">
+											Projected annual cost
+										</div>
+									</div>
+								</div>
+
+								{/* Stat 4: Potential Leaks */}
+								<div className="pt-4 lg:pt-0 lg:px-6 flex flex-col justify-between">
+									<span className="text-xs uppercase tracking-wider text-[#8A93B5] font-semibold">
+										Leak Exposure
+									</span>
+									<div className="mt-2">
+										<div className="text-3xl sm:text-4xl font-bold text-[#FF4D6A] tracking-tight">
+											{money(savings)}
+										</div>
+										<div className="text-sm font-semibold text-white mt-1">
+											Potential Monthly Leaks
+										</div>
+										<div className="text-xs text-[#8A93B5] mt-0.5">
+											{leaks.length} item{leaks.length === 1 ? '' : 's'} worth reviewing
+										</div>
+									</div>
+								</div>
+
+							</div>
+						</div>
+
+						{/* ═══════════════════════════════════════════════════
+						    RARELY USED REVIEW PANEL
+						    ═══════════════════════════════════════════════════ */}
+						<Card hover={false} className="p-6 sm:p-7">
+							<div className="flex items-start gap-3.5 mb-5">
+								<IconTile>
+									<svg className="w-5 h-5 text-[#0A84FF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+										<path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+									</svg>
+								</IconTile>
+								<div>
+									<h2 className="text-lg font-bold text-white tracking-tight">
+										Which subscriptions do you rarely use?
+									</h2>
+									<p className="text-xs text-[#8A93B5] mt-1 leading-relaxed">
+										Select anything you do not use often. We will flag it as a potential money leak for review.
+									</p>
+								</div>
+							</div>
+
+							{/* Subscription Checkbox Pills */}
+							<div className="flex flex-wrap gap-2.5 mb-5">
+								{subscriptions.map((subscription) => {
+									const isSelected = rarelyUsedIds.includes(subscription.id);
+									return (
+										<label
+											key={subscription.id}
+											className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px] cursor-pointer text-xs font-medium transition-all duration-150 border ${
+												isSelected
+													? 'bg-[#0A84FF]/[0.15] border-[#0A84FF]/40 text-white shadow-[0_0_12px_rgba(10,132,255,0.2)]'
+													: 'bg-[#0B1029] border-white/[0.06] text-[#8A93B5] hover:border-white/[0.15] hover:text-white'
+											}`}
+										>
+											<input
+												type="checkbox"
+												checked={isSelected}
+												onChange={() => toggleRarelyUsed(subscription.id)}
+												className="sr-only"
+											/>
+											{/* Custom checkbox visual */}
+											<div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center flex-shrink-0 transition-all ${
+												isSelected
+													? 'bg-[#0A84FF] border-[#0A84FF]'
+													: 'bg-transparent border-white/[0.2]'
+											}`}>
+												{isSelected && (
+													<svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+														<path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+													</svg>
+												)}
+											</div>
+											<span className="font-semibold">{subscription.merchant}</span>
+											<span className={isSelected ? 'text-white/60' : 'text-[#8A93B5]/60'}>
+												{money(subscription.monthlyCost)}/mo
+											</span>
+										</label>
+									);
+								})}
+							</div>
+
+							{/* Review Action */}
+							<div className="flex items-center gap-3 flex-wrap">
+								<PrimaryButton
+									onClick={reviewRarelyUsed}
+									disabled={!rarelyUsedIds.length || reviewing}
+								>
+									{reviewing ? (
+										<>
+											<svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+												<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+												<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+											</svg>
+											<span>Reviewing…</span>
+										</>
+									) : (
+										`Review selected${rarelyUsedIds.length ? ` (${rarelyUsedIds.length})` : ''}`
+									)}
+								</PrimaryButton>
+								{reviewMessage && (
+									<span className="text-xs font-semibold text-[#22D36A] flex items-center gap-1.5">
+										<span>✓</span> {reviewMessage}
+									</span>
+								)}
+							</div>
+						</Card>
+
+						{/* ═══════════════════════════════════════════════════
+						    CONTENT GRID — Subscriptions + Leaks
+						    ═══════════════════════════════════════════════════ */}
+						<div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+
+							{/* Left Column: Subscription Cards (3/5 width) */}
+							<div className="lg:col-span-3 space-y-5">
+								<div className="flex items-center justify-between gap-4">
+									<div>
+										<h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+											Your Subscriptions
+										</h2>
+										<p className="text-xs text-[#8A93B5] mt-0.5">
+											Recurring payments with a predictable cadence
+										</p>
+									</div>
+									<span className="px-2.5 py-1 rounded-[8px] bg-[#0A84FF]/[0.12] border border-[#0A84FF]/30 text-[#0A84FF] text-xs font-bold">
+										{subscriptions.length}
+									</span>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									{subscriptions.map((subscription) => (
+										<SubscriptionCard
+											key={subscription.id}
+											subscription={subscription}
+											money={money}
+											dateLabel={dateLabel}
+										/>
+									))}
+								</div>
+							</div>
+
+							{/* Right Column: Leak Cards (2/5 width) */}
+							<div className="lg:col-span-2 space-y-5">
+								<div className="flex items-center justify-between gap-4">
+									<div>
+										<h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+											Potential{' '}
+											<span className="text-[#FF4D6A]">Leaks</span>
+										</h2>
+										<p className="text-xs text-[#8A93B5] mt-0.5">
+											Recurring expenses that deserve a second look
+										</p>
+									</div>
+									<span className="px-2.5 py-1 rounded-[8px] bg-[#FF4D6A]/[0.12] border border-[#FF4D6A]/30 text-[#FF4D6A] text-xs font-bold">
+										{leaks.length}
+									</span>
+								</div>
+
+								{leaks.length > 0 ? (
+									<div className="space-y-4">
+										{leaks.map((leak) => (
+											<LeakCard
+												key={leak.id}
+												leak={leak}
+												money={money}
+											/>
+										))}
+									</div>
+								) : (
+									<Card hover={false} className="py-12 px-6 text-center flex flex-col items-center justify-center">
+										<div className="w-12 h-12 rounded-[12px] bg-[#22D36A]/[0.12] border border-[#22D36A]/30 text-[#22D36A] flex items-center justify-center mb-3">
+											<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+												<path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+											</svg>
+										</div>
+										<h3 className="text-base font-bold text-white mb-1">
+											No Leaks Detected
+										</h3>
+										<p className="text-xs text-[#8A93B5]">
+											All subscriptions appear to be actively used. Nice work!
+										</p>
+									</Card>
+								)}
+							</div>
+						</div>
+
+						{/* ═══════════════════════════════════════════════════
+						    RECURRING EXPENSES TABLE
+						    ═══════════════════════════════════════════════════ */}
+						<Card hover={false} className="overflow-hidden">
+							<div className="flex items-center justify-between gap-4 mb-5">
+								<div>
+									<h2 className="text-lg font-bold text-white tracking-tight">
+										Recurring Expenses
+									</h2>
+									<p className="text-xs text-[#8A93B5] mt-0.5">
+										Every repeated expense pattern found in your transaction history
+									</p>
+								</div>
+								<span className="px-2.5 py-1 rounded-[8px] bg-[#0A84FF]/[0.12] border border-[#0A84FF]/30 text-[#0A84FF] text-xs font-bold">
+									{recurring.length}
+								</span>
+							</div>
+
+							<div className="overflow-x-auto -mx-6 px-6">
+								<table className="w-full border-collapse text-sm min-w-[620px]">
+									<thead>
+										<tr className="border-b border-white/[0.06]">
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Merchant
+											</th>
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Pattern
+											</th>
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Typical Payment
+											</th>
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Next Payment
+											</th>
+											<th className="text-left py-3 px-3 text-[10px] uppercase tracking-wider text-[#8A93B5] font-semibold">
+												Confidence
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{recurring.map((item) => (
+											<tr
+												key={item.id}
+												className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors duration-100"
+											>
+												<td className="py-3.5 px-3 text-sm font-semibold text-white">
+													{item.merchant}
+												</td>
+												<td className="py-3.5 px-3 text-xs text-[#8A93B5] capitalize">
+													{item.cadence}
+												</td>
+												<td className="py-3.5 px-3 text-xs text-white font-medium">
+													{money(item.amount)}
+												</td>
+												<td className="py-3.5 px-3 text-xs text-[#8A93B5]">
+													{dateLabel(item.nextExpectedPayment)}
+												</td>
+												<td className="py-3.5 px-3">
+													<ConfidenceBadge value={item.confidence} />
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						</Card>
+
+						{/* ═══════════════════════════════════════════════════
+						    FOOTER DISCLAIMER
+						    ═══════════════════════════════════════════════════ */}
+						<div className="text-center text-[11px] text-[#8A93B5] pb-4">
+							Confidence is based on payment timing, amount consistency, and transaction history. Always confirm a subscription before cancelling it.
+						</div>
+					</>
+				)}
+
+			</div>
 		</div>
-	</main>;
+	);
 }
 
-const styles = {
-	page: { minHeight: '100vh', background: '#f5f7fb', color: '#162033', fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', padding: '40px 20px' },
-	shell: { maxWidth: 1180, margin: '0 auto' },
-	header: { display: 'flex', justifyContent: 'space-between', gap: 24, alignItems: 'flex-start', marginBottom: 32 },
-	eyebrow: { color: '#5b6cf5', fontSize: 11, fontWeight: 800, letterSpacing: 1.8, marginBottom: 10 },
-	title: { fontSize: 'clamp(32px, 5vw, 48px)', letterSpacing: -1.5, margin: 0, lineHeight: 1.1 },
-	subtitle: { color: '#6d7890', fontSize: 15, lineHeight: 1.6, maxWidth: 580, margin: '12px 0 0' },
-	status: { color: '#6d7890', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', paddingTop: 10 },
-	statusDot: { width: 8, height: 8, borderRadius: '50%', display: 'inline-block' },
-	metrics: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14, marginBottom: 18 },
-	metricCard: { background: '#fff', border: '1px solid #e7eaf1', borderTop: '3px solid', borderRadius: 14, padding: '20px 21px', boxShadow: '0 8px 24px rgba(39, 52, 86, .04)' },
-	metricLabel: { display: 'block', color: '#6d7890', fontSize: 12, fontWeight: 700, marginBottom: 10 },
-	metricValue: { display: 'block', fontSize: 27, letterSpacing: -.7, marginBottom: 5 }, metricDetail: { color: '#98a1b2', fontSize: 12 },
-	reviewPanel: { background: '#f0f3ff', border: '1px solid #dce2ff', borderRadius: 16, padding: 22, marginBottom: 18 }, reviewCopy: { display: 'flex', gap: 12, alignItems: 'flex-start' }, reviewIcon: { display: 'grid', placeItems: 'center', width: 28, height: 28, flex: '0 0 28px', borderRadius: '50%', background: '#5b6cf5', color: '#fff', fontWeight: 800 }, reviewOptions: { display: 'flex', flexWrap: 'wrap', gap: 9, margin: '18px 0' }, reviewOption: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#fff', border: '1px solid #dce2f1', borderRadius: 9, cursor: 'pointer', fontSize: 12 }, reviewOptionSelected: { borderColor: '#5b6cf5', boxShadow: '0 0 0 2px #5b6cf522' }, checkbox: { accentColor: '#5b6cf5', width: 15, height: 15 }, reviewMerchant: { fontWeight: 750 }, reviewAmount: { color: '#6d7890' }, reviewAction: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }, reviewButton: { border: 0, borderRadius: 8, padding: '10px 14px', background: '#5b6cf5', color: '#fff', fontWeight: 750, cursor: 'pointer' }, reviewMessage: { color: '#16865a', fontSize: 12, fontWeight: 700 },
-	contentGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 18, marginBottom: 18 },
-	panel: { background: '#fff', border: '1px solid #e7eaf1', borderRadius: 16, padding: 22, boxShadow: '0 8px 24px rgba(39, 52, 86, .04)', marginBottom: 18 },
-	panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 18 }, panelTitle: { margin: 0, fontSize: 17, letterSpacing: -.2 }, panelHint: { margin: '6px 0 0', color: '#8a94a7', fontSize: 12 }, count: { display: 'grid', placeItems: 'center', minWidth: 28, height: 28, borderRadius: 9, background: '#eef0ff', color: '#5b6cf5', fontWeight: 800, fontSize: 12 },
-	subscriptionList: { display: 'grid', gap: 4 }, subscriptionRow: { display: 'flex', gap: 13, alignItems: 'center', padding: '13px 0', borderTop: '1px solid #f0f2f6' }, merchantIcon: { display: 'grid', placeItems: 'center', width: 38, height: 38, flex: '0 0 38px', borderRadius: 11, background: '#eef0ff', color: '#5b6cf5', fontWeight: 800 }, subscriptionMain: { minWidth: 0, flex: 1 }, merchantName: { fontWeight: 750, fontSize: 14 }, meta: { color: '#8a94a7', fontSize: 11, marginTop: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, progress: { height: 4, background: '#edf0f5', borderRadius: 4, marginTop: 10, maxWidth: 220 }, progressBar: { display: 'block', height: '100%', borderRadius: 4, background: '#16a36a' }, subscriptionCost: { textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }, subscriptionCostStrong: { fontSize: 14 }, subscriptionCostLabel: { color: '#98a1b2', fontSize: 10 }, confidence: { display: 'inline-block', borderRadius: 5, padding: '4px 6px', fontSize: 10, fontWeight: 750, whiteSpace: 'nowrap' },
-	leakRow: { padding: '14px 0', borderTop: '1px solid #f0f2f6' }, leakTop: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 13 }, severity: { fontSize: 10, textTransform: 'uppercase', letterSpacing: .5, fontWeight: 800 }, leakCost: { marginLeft: 'auto', fontWeight: 800 }, reason: { color: '#8a94a7', fontSize: 11, margin: '8px 0' }, savings: { color: '#16a36a', background: '#eefaf5', borderRadius: 7, padding: '7px 9px', fontSize: 11 }, empty: { color: '#8a94a7', fontSize: 13, padding: '20px 0' },
-	tableWrap: { overflowX: 'auto' }, table: { width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 620 }, th: { textAlign: 'left', padding: '10px 12px', color: '#98a1b2', fontSize: 10, textTransform: 'uppercase', letterSpacing: .7, borderBottom: '1px solid #edf0f5' }, td: { padding: '14px 12px', borderBottom: '1px solid #f0f2f6', color: '#6d7890' }, tableMerchant: { color: '#162033', fontWeight: 750 }, capitalize: { textTransform: 'capitalize' }, footer: { color: '#98a1b2', fontSize: 11, textAlign: 'center', padding: '2px 0 20px' },
-};
