@@ -1,136 +1,136 @@
-import React from "react";
-import { Wallet, TrendingUp, AlertTriangle, Sparkles, CreditCard, PieChart } from "lucide-react";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
+import { getDashboardSummary } from "../../services/api/dashboard";
+import StatCard from "../../components/dashboard/StatCard";
+import HealthScoreGauge from "../../components/dashboard/HealthScoreGauge";
+import RecentTransactionsList from "../../components/dashboard/RecentTransactionsList";
+import ActiveSubscriptionsList from "../../components/dashboard/ActiveSubscriptionsList";
+import { Sparkles, Calendar, Zap } from "lucide-react";
 
 export default function DashboardPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  const [summaryData, setSummaryData] = useState(null);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (user) {
+      const fetchSummary = async () => {
+        try {
+          const data = await getDashboardSummary();
+          setSummaryData(data);
+        } catch (error) {
+          console.error("Failed to fetch dashboard summary:", error);
+        } finally {
+          setDataLoading(false);
+        }
+      };
+
+      fetchSummary();
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading || dataLoading) {
+    return (
+      <div className="min-h-screen bg-[#070b16] p-6 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-white/10 border-t-accent rounded-full animate-spin"></div>
+          <p className="text-sm font-semibold text-slate-400">Loading your financial telemetry...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Financial Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Welcome back! Here is your AI-powered financial overview and health score summary.
-          </p>
-        </div>
-        <button className="inline-flex items-center gap-2 bg-lime-500 hover:bg-lime-600 text-slate-950 font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm">
-          <Sparkles className="w-4 h-4" />
-          Ask AI Coach
-        </button>
-      </div>
-
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-sm">
-            <span>Total Income</span>
-            <Wallet className="w-5 h-5 text-lime-600" />
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900">$8,450.00</div>
-          <span className="inline-block text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-            +12.4% from last month
-          </span>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-sm">
-            <span>Monthly Expenses</span>
-            <CreditCard className="w-5 h-5 text-indigo-500" />
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900">$3,240.50</div>
-          <span className="inline-block text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-            68% of monthly budget used
-          </span>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-sm">
-            <span>Financial Health Score</span>
-            <TrendingUp className="w-5 h-5 text-lime-600" />
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900">82</span>
-            <span className="text-sm font-semibold text-slate-400">/ 100</span>
-          </div>
-          <span className="inline-block text-xs font-medium text-lime-700 bg-lime-50 px-2 py-0.5 rounded-full">
-            Excellent • Low Debt Risk
-          </span>
-        </div>
-      </div>
-
-      {/* Subscriptions & AI Insight Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-slate-900 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
-              Subscription Leaks Detected
-            </h2>
-            <span className="text-xs font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
-              2 Unused Leaks
-            </span>
-          </div>
-          <p className="text-xs text-slate-500">
-            FinPilot detected 2 recurring subscriptions with low activity over the last 60 days.
-          </p>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm">
-              <div>
-                <div className="font-semibold text-slate-800">StreamMax HD</div>
-                <div className="text-xs text-slate-500">Renews Oct 02 • $17.99/mo</div>
-              </div>
-              <button className="text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 px-3 py-1.5 rounded-lg transition-colors">
-                Cancel Leak
-              </button>
+    <div className="min-h-screen bg-[#070b16] text-white p-4 sm:p-6 md:p-8 space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Top Header Banner */}
+        <div className="bg-slate-950/70 rounded-2xl p-6 shadow-xl border border-white/10 backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-accent bg-accent/20 px-2.5 py-0.5 rounded-full border border-accent/30">
+                FinPilot AI Overview
+              </span>
+              <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+              </span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm">
-              <div>
-                <div className="font-semibold text-slate-800">GymPass Pro</div>
-                <div className="text-xs text-slate-500">Renews Sep 28 • $45.00/mo</div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Welcome back, {user?.email ? user.email.split("@")[0] : "Pilot"} 👋
+            </h1>
+            <p className="text-sm text-slate-400">
+              Here is your real-time financial status, health score, and active account telemetry.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/coach")}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-amber-500 hover:opacity-90 text-white font-bold text-sm px-5 py-2.5 rounded-full transition-all shadow-lg"
+            >
+              <Sparkles className="w-4 h-4 text-white" />
+              Ask AI Coach
+            </button>
+          </div>
+        </div>
+
+        {/* Top Row Grid: Income Stat, Expense Stat & Prominent Health Score Gauge */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <StatCard
+              label="Total Income"
+              value={summaryData?.totalIncome ?? 0}
+              trend={12.4}
+            />
+            <StatCard
+              label="Total Expense"
+              value={summaryData?.totalExpense ?? 0}
+              trend={-3.2}
+            />
+            {/* Quick Summary Pill Card */}
+            <div className="sm:col-span-2 bg-slate-950/70 rounded-2xl p-5 shadow-xl border border-white/10 backdrop-blur-xl flex items-center justify-between text-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-accent/20 text-accent border border-accent/30 flex items-center justify-center font-bold">
+                  <Zap className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">Subscription Leak Detection</div>
+                  <div className="text-xs text-slate-400">Scanning active recurring payments...</div>
+                </div>
               </div>
-              <button className="text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 px-3 py-1.5 rounded-lg transition-colors">
-                Cancel Leak
+              <button
+                onClick={() => router.push("/subscriptions")}
+                className="text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/10 px-3.5 py-1.5 rounded-xl transition-all"
+              >
+                Inspect Leaks
               </button>
             </div>
           </div>
+
+          {/* Prominent Health Score Gauge */}
+          <div className="lg:col-span-1">
+            <HealthScoreGauge score={summaryData?.healthScore ?? null} />
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-slate-900 flex items-center gap-2">
-              <PieChart className="w-5 h-5 text-lime-600" />
-              Budget Goal Progress
-            </h2>
-            <span className="text-xs font-semibold text-slate-500">September 2026</span>
-          </div>
-          <div className="space-y-4 text-sm">
-            <div>
-              <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                <span>Dining & Entertainment</span>
-                <span>$450 / $600</span>
-              </div>
-              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                <div className="bg-lime-500 h-full rounded-full" style={{ width: "75%" }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                <span>Groceries & Supplies</span>
-                <span>$680 / $800</span>
-              </div>
-              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                <div className="bg-emerald-500 h-full rounded-full" style={{ width: "85%" }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                <span>Utilities & Transport</span>
-                <span>$310 / $350</span>
-              </div>
-              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                <div className="bg-amber-500 h-full rounded-full" style={{ width: "88%" }}></div>
-              </div>
-            </div>
-          </div>
+        {/* Bottom Row Grid: Recent Transactions & Active Subscriptions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RecentTransactionsList
+            transactions={summaryData?.recentTransactions || []}
+          />
+          <ActiveSubscriptionsList
+            subscriptions={summaryData?.activeSubscriptions || []}
+          />
         </div>
       </div>
     </div>

@@ -15,6 +15,7 @@ const AuthContext = createContext({
   user: null,
   loading: true,
   signIn: async () => {},
+  signUp: async () => {},
   signOut: async () => {},
 });
 
@@ -57,13 +58,22 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const signUp = async (email, password) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) throw error;
+    return data;
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

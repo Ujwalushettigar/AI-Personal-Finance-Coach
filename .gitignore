@@ -11,9 +11,13 @@ dist/
 
 # Environment Variables & Secrets
 .env
+backend/.env
+frontend/.env
+frontend/.env.local
 .env*.local
 *.env
 !.env.example
+!**/.env.example
 
 # Logs
 *.log

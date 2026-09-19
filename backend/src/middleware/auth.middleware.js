@@ -1,28 +1,27 @@
-const { getSupabaseClient } = require('../config/db');
+const jwt = require('jsonwebtoken');
 
-async function verifyAuth(req, res, next) {
+function verifyAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Unauthorized: Missing or invalid Authorization header' });
+      return res.status(401).json({ error: 'No token provided' });
     }
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ error: 'Unauthorized: Missing access token' });
+      return res.status(401).json({ error: 'No token provided' });
     }
 
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase.auth.getUser(token);
-
-    if (error || !data || !data.user) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+    if (!jwtSecret) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    req.user = data.user;
+    const decoded = jwt.verify(token, jwtSecret);
+    req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Unauthorized: Authentication failed', details: err.message });
+    return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
 
