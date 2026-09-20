@@ -5,8 +5,8 @@
 
 const { getSupabaseClient } = require('../config/db');
 
-async function getSavingsGoals(userId) {
-  const supabase = getSupabaseClient();
+async function getSavingsGoals(userId, token) {
+  const supabase = getSupabaseClient(token);
   const { data, error } = await supabase
     .from('savings_goals')
     .select('*')
@@ -17,8 +17,8 @@ async function getSavingsGoals(userId) {
   return data || [];
 }
 
-async function getSavingsGoalById(userId, id) {
-  const supabase = getSupabaseClient();
+async function getSavingsGoalById(userId, id, token) {
+  const supabase = getSupabaseClient(token);
   const { data, error } = await supabase
     .from('savings_goals')
     .select('*')
@@ -30,8 +30,8 @@ async function getSavingsGoalById(userId, id) {
   return data;
 }
 
-async function createSavingsGoal(userId, data) {
-  const supabase = getSupabaseClient();
+async function createSavingsGoal(userId, data, token) {
+  const supabase = getSupabaseClient(token);
   const { data: newGoal, error } = await supabase
     .from('savings_goals')
     .insert([
@@ -51,8 +51,8 @@ async function createSavingsGoal(userId, data) {
   return newGoal;
 }
 
-async function updateSavingsGoal(userId, id, data) {
-  const supabase = getSupabaseClient();
+async function updateSavingsGoal(userId, id, data, token) {
+  const supabase = getSupabaseClient(token);
   const updatePayload = {
     ...data,
     updated_at: new Date().toISOString(),
@@ -79,13 +79,13 @@ async function updateSavingsGoal(userId, id, data) {
   return updatedGoal;
 }
 
-async function updateProgress(userId, id, addedAmount) {
-  const currentGoal = await getSavingsGoalById(userId, id);
+async function updateProgress(userId, id, addedAmount, token) {
+  const currentGoal = await getSavingsGoalById(userId, id, token);
   if (!currentGoal) return null;
 
   const newCurrentAmount = (parseFloat(currentGoal.current_amount) || 0) + parseFloat(addedAmount);
 
-  const supabase = getSupabaseClient();
+  const supabase = getSupabaseClient(token);
   const { data: updatedGoal, error } = await supabase
     .from('savings_goals')
     .update({
@@ -101,8 +101,8 @@ async function updateProgress(userId, id, addedAmount) {
   return updatedGoal;
 }
 
-async function deleteSavingsGoal(userId, id) {
-  const supabase = getSupabaseClient();
+async function deleteSavingsGoal(userId, id, token) {
+  const supabase = getSupabaseClient(token);
   const { data, error } = await supabase
     .from('savings_goals')
     .delete()

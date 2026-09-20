@@ -5,6 +5,7 @@
 
 const { getSupabaseClient } = require('../config/db');
 const {
+  syncDetectedSubscriptions,
   getSubscriptions,
   getSubscriptionById,
   deleteSubscription: deleteSubscriptionModel,
@@ -23,7 +24,8 @@ async function listSubscriptions(req, res) {
       likelyOnly: req.query.likelyOnly === 'true',
       rarelyUsedOnly: req.query.rarelyUsedOnly === 'true',
     };
-    const subscriptions = await getSubscriptions(userId, filters);
+    await syncDetectedSubscriptions(userId, token);
+    const subscriptions = await getSubscriptions(userId, filters, token);
     return res.json(subscriptions);
   } catch (err) {
     console.error('Error in listSubscriptions:', err);
@@ -37,7 +39,7 @@ async function getSubscription(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const subscription = await getSubscriptionById(userId, id);
+    const subscription = await getSubscriptionById(userId, id, token);
     if (!subscription) {
       return res.status(404).json({ error: 'Subscription not found or access denied' });
     }
@@ -54,7 +56,7 @@ async function deleteSubscription(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const deleted = await deleteSubscriptionModel(userId, id);
+    const deleted = await deleteSubscriptionModel(userId, id, token);
     if (!deleted) {
       return res.status(404).json({ error: 'Subscription not found or access denied' });
     }
@@ -71,11 +73,12 @@ async function toggleRarelyUsed(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const value = req.body.rarely_used !== undefined
-      ? req.body.rarely_used
-      : (req.body.value !== undefined ? req.body.value : true);
+    const body = req.body || {};
+    const value = body.rarely_used !== undefined
+      ? body.rarely_used
+      : (body.value !== undefined ? body.value : true);
 
-    const updated = await markRarelyUsed(userId, id, value);
+    const updated = await markRarelyUsed(userId, id, value, token);
     if (!updated) {
       return res.status(404).json({ error: 'Subscription not found or access denied' });
     }
@@ -86,9 +89,52 @@ async function toggleRarelyUsed(req, res) {
   }
 }
 
+async function addSubscription(req, res) {
+  try {
+    const token = req.token || req.authToken;
+    getSupabaseClient(token);
+    const userId = req.user.sub || req.user.id;
+
+    const { merchant, cadence, amount } = req.body || {};
+    const supportedCadences = new Set(['weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']);
+    const numericAmount = Number(amount);
+
+    if (!String(merchant || '').trim() || !supportedCadences.has(cadence) || !Number.isFinite(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ error: 'Missing required fields: merchant, cadence, amount' });
+    }
+
+    // Calculate costs
+    let monthlyCost = 0;
+    let yearlyCost = 0;
+    switch(cadence) {
+      case 'weekly': monthlyCost = numericAmount * 4.33; yearlyCost = numericAmount * 52; break;
+      case 'biweekly': monthlyCost = numericAmount * 2.16; yearlyCost = numericAmount * 26; break;
+      case 'monthly': monthlyCost = numericAmount; yearlyCost = numericAmount * 12; break;
+      case 'quarterly': monthlyCost = numericAmount / 3; yearlyCost = numericAmount * 4; break;
+      case 'yearly': monthlyCost = numericAmount / 12; yearlyCost = numericAmount; break;
+      default: monthlyCost = numericAmount; yearlyCost = numericAmount * 12; break;
+    }
+
+    const { addManualSubscription } = require('../models/Subscription');
+    const newSub = await addManualSubscription(userId, {
+      merchant: merchant.trim(),
+      cadence,
+      amount: numericAmount,
+      monthly_cost: monthlyCost,
+      yearly_cost: yearlyCost
+    }, token);
+
+    return res.status(201).json({ success: true, subscription: newSub });
+  } catch (err) {
+    console.error('Error in addSubscription:', err);
+    return res.status(err.statusCode || 500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   listSubscriptions,
   getSubscription,
   deleteSubscription,
   toggleRarelyUsed,
+  addSubscription,
 };

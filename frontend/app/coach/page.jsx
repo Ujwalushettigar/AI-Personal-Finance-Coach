@@ -6,6 +6,70 @@ import { useAuth } from "../../context/AuthContext";
 import { askCoach } from "../../services/api/coach";
 import { Send, Bot, User, Sparkles, Loader2, Zap } from "lucide-react";
 
+function cleanCoachLine(line) {
+  return line
+    .replace(/^\s*#{1,6}\s*/, "")
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/__(.*?)__/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/_(.*?)_/g, "$1")
+    .replace(/^\s*[-*+]\s+/, "")
+    .replace(/^\s*\d+[.)]\s+/, "")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+}
+
+function CoachResponse({ text }) {
+  const lines = String(text || "")
+    .replace(/\r/g, "")
+    .split("\n");
+
+  return (
+    <div className="space-y-2 break-words">
+      {lines.map((line, index) => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) {
+          return <div key={`space-${index}`} className="h-1" aria-hidden="true" />;
+        }
+
+        const isBullet = /^\s*[-*+]\s+/.test(line) || /^\s*\d+[.)]\s+/.test(line);
+        const isHeading = /^\s*#{1,6}\s+/.test(line);
+        const cleanedLine = cleanCoachLine(line);
+        const nextActionMatch = cleanedLine.match(/^Next Action:\s*(.*)$/i);
+
+        if (nextActionMatch) {
+          return (
+            <p key={index} className="pt-1 text-[#DDE5FF]">
+              <span className="font-bold text-[#39FF14]">Next Action:</span>{" "}
+              {nextActionMatch[1]}
+            </p>
+          );
+        }
+
+        if (isBullet) {
+          return (
+            <div key={index} className="flex items-start gap-2 text-[#DDE5FF]">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#39FF14]" aria-hidden="true" />
+              <span>{cleanedLine}</span>
+            </div>
+          );
+        }
+
+        return (
+          <p
+            key={index}
+            className={isHeading ? "font-bold text-white" : "text-[#DDE5FF]"}
+          >
+            {cleanedLine}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * CoachPage (CryptoVault Fintech Theme)
  * - Deep navy background #0A0E27
@@ -111,7 +175,7 @@ export default function CoachPage() {
               <h1 className="text-lg font-bold text-white flex items-center gap-2">
                 FinPilot AI Coach
                 <span className="text-[10px] font-extrabold uppercase bg-[#39FF14]/15 text-[#39FF14] border border-[#39FF14]/30 px-2.5 py-0.5 rounded-full tracking-wider">
-                  Gemini 2.0
+                  Mistral AI
                 </span>
               </h1>
               <p className="text-xs text-[#8A93B5]">
@@ -148,7 +212,7 @@ export default function CoachPage() {
                   : "bg-[#0B1029] border border-white/10 text-white rounded-tl-none shadow-sm"
                   }`}
               >
-                {msg.text}
+                {msg.role === "coach" ? <CoachResponse text={msg.text} /> : msg.text}
               </div>
             </div>
           ))}

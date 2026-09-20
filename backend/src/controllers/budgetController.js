@@ -61,7 +61,7 @@ async function listBudgets(req, res) {
     const token = req.token || req.authToken;
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
-    const budgets = await getBudgets(userId);
+    const budgets = await getBudgets(userId, token);
     return res.json(budgets);
   } catch (err) {
     console.error('Error in listBudgets:', err);
@@ -80,7 +80,7 @@ async function createBudget(req, res) {
       return res.status(400).json({ error: 'Missing required fields: category, amount_limit, and period are required.' });
     }
 
-    const newBudget = await createBudgetModel(userId, { category, amount_limit, period });
+    const newBudget = await createBudgetModel(userId, { category, amount_limit, period }, token);
     return res.status(201).json(newBudget);
   } catch (err) {
     console.error('Error in createBudget:', err);
@@ -94,7 +94,7 @@ async function updateBudget(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const updated = await updateBudgetModel(userId, id, req.body);
+    const updated = await updateBudgetModel(userId, id, req.body, token);
     if (!updated) {
       return res.status(404).json({ error: 'Budget not found or access denied' });
     }
@@ -111,7 +111,7 @@ async function deleteBudget(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const deleted = await deleteBudgetModel(userId, id);
+    const deleted = await deleteBudgetModel(userId, id, token);
     if (!deleted) {
       return res.status(404).json({ error: 'Budget not found or access denied' });
     }
@@ -129,7 +129,7 @@ async function listSavingsGoals(req, res) {
     const token = req.token || req.authToken;
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
-    const goals = await getSavingsGoals(userId);
+    const goals = await getSavingsGoals(userId, token);
     return res.json(goals);
   } catch (err) {
     console.error('Error in listSavingsGoals:', err);
@@ -154,7 +154,7 @@ async function createSavingsGoal(req, res) {
       current_amount,
       target_date,
       category,
-    });
+    }, token);
     return res.status(201).json(newGoal);
   } catch (err) {
     console.error('Error in createSavingsGoal:', err);
@@ -168,7 +168,7 @@ async function updateSavingsGoal(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const updated = await updateSavingsGoalModel(userId, id, req.body);
+    const updated = await updateSavingsGoalModel(userId, id, req.body, token);
     if (!updated) {
       return res.status(404).json({ error: 'Savings goal not found or access denied' });
     }
@@ -191,7 +191,7 @@ async function addSavingsProgress(req, res) {
       return res.status(400).json({ error: 'Valid addedAmount numeric value is required.' });
     }
 
-    const updated = await updateProgress(userId, id, Number(addedAmount));
+    const updated = await updateProgress(userId, id, Number(addedAmount), token);
     if (!updated) {
       return res.status(404).json({ error: 'Savings goal not found or access denied' });
     }
@@ -208,7 +208,7 @@ async function deleteSavingsGoal(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const deleted = await deleteSavingsGoalModel(userId, id);
+    const deleted = await deleteSavingsGoalModel(userId, id, token);
     if (!deleted) {
       return res.status(404).json({ error: 'Savings goal not found or access denied' });
     }

@@ -23,7 +23,7 @@ async function listTransactions(req, res) {
       startDate: req.query.startDate,
       endDate: req.query.endDate,
     };
-    const transactions = await getTransactions(userId, filters);
+    const transactions = await getTransactions(userId, filters, token);
     return res.json(transactions);
   } catch (err) {
     console.error('Error in listTransactions:', err);
@@ -37,7 +37,7 @@ async function getTransaction(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const transaction = await getTransactionById(userId, id);
+    const transaction = await getTransactionById(userId, id, token);
     if (!transaction) {
       return res.status(404).json({ error: 'Transaction not found or access denied' });
     }
@@ -66,7 +66,7 @@ async function createTransaction(req, res) {
       category,
       description,
       merchant,
-    });
+    }, token);
 
     return res.status(201).json(newTransaction);
   } catch (err) {
@@ -81,7 +81,7 @@ async function updateTransaction(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const updatedTransaction = await updateTransactionModel(userId, id, req.body);
+    const updatedTransaction = await updateTransactionModel(userId, id, req.body, token);
     if (!updatedTransaction) {
       return res.status(404).json({ error: 'Transaction not found or access denied' });
     }
@@ -98,7 +98,7 @@ async function deleteTransaction(req, res) {
     getSupabaseClient(token);
     const userId = req.user.sub || req.user.id;
     const { id } = req.params;
-    const deletedTransaction = await deleteTransactionModel(userId, id);
+    const deletedTransaction = await deleteTransactionModel(userId, id, token);
     if (!deletedTransaction) {
       return res.status(404).json({ error: 'Transaction not found or access denied' });
     }

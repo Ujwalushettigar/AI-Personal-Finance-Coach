@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { budgetApi } from '../../services/api/budget';
 import BudgetOverview from '../../components/budget-goals/BudgetOverview';
 import BudgetCard from '../../components/budget-goals/BudgetCard';
@@ -16,6 +17,7 @@ import { Card, BadgePill, PrimaryButton } from '../../components/budget-goals/Th
  * Budget & Financial Health Page (CryptoVault Fintech Theme)
  */
 export default function BudgetPage() {
+  const { user, loading: authLoading } = useAuth();
   // Navigation Tabs: 'BUDGETS' | 'GOALS' | 'HEALTH_SCORE'
   const [activeTab, setActiveTab] = useState('BUDGETS');
 
@@ -150,12 +152,14 @@ export default function BudgetPage() {
   }, []);
 
   useEffect(() => {
+    if (authLoading || !user?.id) return;
     fetchBudgets();
     fetchGoals();
     fetchHealthScore();
-  }, [fetchBudgets, fetchGoals, fetchHealthScore]);
+  }, [authLoading, user?.id, fetchBudgets, fetchGoals, fetchHealthScore]);
 
   useEffect(() => {
+    if (authLoading || !user?.id) return;
     if (activeTab === 'BUDGETS') {
       fetchBudgets();
     } else if (activeTab === 'GOALS') {
@@ -163,7 +167,7 @@ export default function BudgetPage() {
     } else if (activeTab === 'HEALTH_SCORE') {
       fetchHealthScore();
     }
-  }, [activeTab, fetchBudgets, fetchGoals, fetchHealthScore]);
+  }, [activeTab, authLoading, user?.id, fetchBudgets, fetchGoals, fetchHealthScore]);
 
   // Create or Update Budget Handler
   const handleSaveBudget = async (formData) => {

@@ -1,7 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { getSubscriptions, markRarelyUsed } from '../../services/api/subscriptions';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import {
+  getSubscriptions,
+  markRarelyUsed,
+  createSubscription,
+  subscribeToSubscriptionChanges,
+} from '../../services/api/subscriptions';
 import { Card, BadgePill, IconTile } from '../../components/budget-goals/ThemeCard';
 import SubscriptionCard from '../../components/subscriptions/SubscriptionCard';
 import LeakCard from '../../components/subscriptions/LeakCard';
@@ -37,14 +43,21 @@ function ConfidenceBadge({ value }) {
 }
 
 export default function SubscriptionsPage() {
+  const { user, loading: authLoading } = useAuth();
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
 
-  const fetchSubscriptionsData = async () => {
+  // Manual Add Subscription State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [newSubForm, setNewSubForm] = useState({ merchant: '', amount: '', cadence: 'monthly' });
+
+  const fetchSubscriptionsData = useCallback(async ({ showLoading = true } = {}) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       setError('');
       const res = await getSubscriptions();
       const list = Array.isArray(res) ? res : res?.subscriptions || [];
@@ -52,15 +65,48 @@ export default function SubscriptionsPage() {
     } catch (err) {
       console.error('Failed to load subscriptions:', err);
       setError(err.message || 'Unable to load subscription data.');
-      setSubscriptions([]);
+      if (showLoading) setSubscriptions([]);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchSubscriptionsData();
-  }, []);
+    if (authLoading) return undefined;
+
+    if (!user?.id) {
+      setSubscriptions([]);
+      setError('Please sign in to load your subscriptions.');
+      setLoading(false);
+      return undefined;
+    }
+
+    let disposed = false;
+    let unsubscribe = () => {};
+
+    const loadSubscriptions = async () => {
+      await fetchSubscriptionsData();
+      if (disposed) return;
+
+      unsubscribe = subscribeToSubscriptionChanges(user.id, () => {
+        void fetchSubscriptionsData({ showLoading: false });
+      });
+    };
+
+    void loadSubscriptions();
+
+    // Realtime is preferred, but polling keeps the page current if the table
+    // has not yet been added to the Supabase Realtime publication.
+    const refreshTimer = window.setInterval(() => {
+      void fetchSubscriptionsData({ showLoading: false });
+    }, 30000);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(refreshTimer);
+      unsubscribe();
+    };
+  }, [authLoading, user?.id, fetchSubscriptionsData]);
 
   // Derived Statistics from real subscriptions data
   const summary = useMemo(() => {
@@ -135,6 +181,27 @@ export default function SubscriptionsPage() {
     }
   }
 
+  // Handle Manual Add Subscription
+  async function handleAddSubscription(e) {
+    e.preventDefault();
+    if (!newSubForm.merchant || !newSubForm.amount) return;
+    
+    setIsAdding(true);
+    setAddError('');
+    
+    try {
+      await createSubscription(newSubForm);
+      await fetchSubscriptionsData(); // Refresh list after adding
+      setIsAddModalOpen(false);
+      setNewSubForm({ merchant: '', amount: '', cadence: 'monthly' });
+    } catch (err) {
+      console.error('Failed to add subscription:', err);
+      setAddError(err.message || 'Failed to add subscription');
+    } finally {
+      setIsAdding(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0E27] text-white p-4 sm:p-8 space-y-10 antialiased">
       <div className="max-w-[1216px] mx-auto space-y-10">
@@ -160,6 +227,16 @@ export default function SubscriptionsPage() {
               {loading ? 'Analyzing transactions…' : error ? 'Error loading API' : 'Live transaction analysis'}
             </span>
           </div>
+          
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0A84FF] hover:bg-[#0A84FF]/90 text-white rounded-lg font-semibold text-sm transition-colors mt-4 sm:mt-0"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Subscription
+          </button>
         </div>
 
         {/* LOADING STATE */}
@@ -474,6 +551,90 @@ export default function SubscriptionsPage() {
         )}
 
       </div>
+
+      {/* ADD SUBSCRIPTION MODAL */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#0B1029] border border-white/[0.1] rounded-[24px] w-full max-w-md shadow-2xl overflow-hidden relative">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white tracking-tight">Add Subscription</h3>
+                <button
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="text-[#8A93B5] hover:text-white transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {addError && (
+                <div className="mb-4 p-3 rounded-[12px] bg-[#FF4D6A]/[0.12] border border-[#FF4D6A]/30 text-[#FF4D6A] text-sm">
+                  {addError}
+                </div>
+              )}
+
+              <form onSubmit={handleAddSubscription} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#8A93B5] mb-1.5">Merchant Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={newSubForm.merchant}
+                    onChange={e => setNewSubForm({ ...newSubForm, merchant: e.target.value })}
+                    className="w-full bg-[#0F1633] border border-white/[0.06] rounded-[12px] px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#0A84FF] transition-colors"
+                    placeholder="e.g. Netflix"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#8A93B5] mb-1.5">Amount</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <span className="text-[#8A93B5]">$</span>
+                      </div>
+                      <input
+                        type="number"
+                        required
+                        min="0.01"
+                        step="0.01"
+                        value={newSubForm.amount}
+                        onChange={e => setNewSubForm({ ...newSubForm, amount: e.target.value })}
+                        className="w-full bg-[#0F1633] border border-white/[0.06] rounded-[12px] pl-8 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#0A84FF] transition-colors"
+                        placeholder="15.99"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#8A93B5] mb-1.5">Cadence</label>
+                    <select
+                      value={newSubForm.cadence}
+                      onChange={e => setNewSubForm({ ...newSubForm, cadence: e.target.value })}
+                      className="w-full bg-[#0F1633] border border-white/[0.06] rounded-[12px] px-4 py-3 text-white focus:outline-none focus:border-[#0A84FF] transition-colors appearance-none"
+                    >
+                      <option value="weekly">Weekly</option>
+                      <option value="biweekly">Bi-weekly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isAdding}
+                  className="w-full mt-6 bg-[#22D36A] hover:bg-[#22D36A]/90 disabled:opacity-50 text-[#0A0E27] font-bold py-3 px-4 rounded-[12px] transition-all duration-200 shadow-[0_0_15px_rgba(34,211,106,0.25)] hover:shadow-[0_0_20px_rgba(34,211,106,0.4)]"
+                >
+                  {isAdding ? 'Adding...' : 'Save Subscription'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

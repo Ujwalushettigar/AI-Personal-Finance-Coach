@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import TransactionForm from '../../components/transactions/TransactionForm';
 import TransactionList from '../../components/transactions/TransactionList';
 import TransactionFilters from '../../components/transactions/TransactionFilters';
@@ -14,6 +15,7 @@ import {
 } from '../../services/api/transactions';
 
 export default function TransactionsPage() {
+  const { user, loading: authLoading } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -88,8 +90,14 @@ export default function TransactionsPage() {
   );
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user?.id) {
+      setLoading(false);
+      setError('Please sign in to load your transactions.');
+      return;
+    }
     loadTransactions(filters);
-  }, [filters, loadTransactions]);
+  }, [authLoading, user?.id, filters, loadTransactions]);
 
   const showToast = (message, type = 'success') => {
     setNotification({ message, type });

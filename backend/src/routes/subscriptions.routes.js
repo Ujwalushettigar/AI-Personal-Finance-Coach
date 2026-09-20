@@ -11,10 +11,12 @@ const {
   getSubscription,
   deleteSubscription,
   toggleRarelyUsed,
+  addSubscription,
 } = require('../controllers/subscriptionController');
 
 router.use(verifyAuth);
 
+router.post('/', addSubscription);
 router.get('/', listSubscriptions);
 router.get('/:id', getSubscription);
 router.delete('/:id', deleteSubscription);

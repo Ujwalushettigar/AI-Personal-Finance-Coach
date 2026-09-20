@@ -5,8 +5,8 @@
 
 const { getSupabaseClient } = require('../config/db');
 
-async function getTransactions(userId, filters = {}) {
-  const supabase = getSupabaseClient();
+async function getTransactions(userId, filters = {}, token) {
+  const supabase = getSupabaseClient(token);
   let query = supabase
     .from('transactions')
     .select('*')
@@ -31,8 +31,8 @@ async function getTransactions(userId, filters = {}) {
   return data || [];
 }
 
-async function getTransactionById(userId, id) {
-  const supabase = getSupabaseClient();
+async function getTransactionById(userId, id, token) {
+  const supabase = getSupabaseClient(token);
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
@@ -44,8 +44,8 @@ async function getTransactionById(userId, id) {
   return data;
 }
 
-async function createTransaction(userId, data) {
-  const supabase = getSupabaseClient();
+async function createTransaction(userId, data, token) {
+  const supabase = getSupabaseClient(token);
   const { data: newRow, error } = await supabase
     .from('transactions')
     .insert([
@@ -66,8 +66,8 @@ async function createTransaction(userId, data) {
   return newRow;
 }
 
-async function updateTransaction(userId, id, data) {
-  const supabase = getSupabaseClient();
+async function updateTransaction(userId, id, data, token) {
+  const supabase = getSupabaseClient(token);
   const updatePayload = {
     ...data,
     updated_at: new Date().toISOString(),
@@ -91,8 +91,8 @@ async function updateTransaction(userId, id, data) {
   return updatedRow;
 }
 
-async function deleteTransaction(userId, id) {
-  const supabase = getSupabaseClient();
+async function deleteTransaction(userId, id, token) {
+  const supabase = getSupabaseClient(token);
   const { data: deletedRow, error } = await supabase
     .from('transactions')
     .delete()

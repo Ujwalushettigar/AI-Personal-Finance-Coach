@@ -5,8 +5,8 @@
 
 const { getSupabaseClient } = require('../config/db');
 
-async function getBudgets(userId) {
-  const supabase = getSupabaseClient();
+async function getBudgets(userId, token) {
+  const supabase = getSupabaseClient(token);
   const { data, error } = await supabase
     .from('budgets')
     .select('*')
@@ -17,8 +17,8 @@ async function getBudgets(userId) {
   return data || [];
 }
 
-async function getBudgetById(userId, id) {
-  const supabase = getSupabaseClient();
+async function getBudgetById(userId, id, token) {
+  const supabase = getSupabaseClient(token);
   const { data, error } = await supabase
     .from('budgets')
     .select('*')
@@ -30,8 +30,8 @@ async function getBudgetById(userId, id) {
   return data;
 }
 
-async function createBudget(userId, data) {
-  const supabase = getSupabaseClient();
+async function createBudget(userId, data, token) {
+  const supabase = getSupabaseClient(token);
   const { data: newBudget, error } = await supabase
     .from('budgets')
     .insert([
@@ -49,8 +49,8 @@ async function createBudget(userId, data) {
   return newBudget;
 }
 
-async function updateBudget(userId, id, data) {
-  const supabase = getSupabaseClient();
+async function updateBudget(userId, id, data, token) {
+  const supabase = getSupabaseClient(token);
   const updatePayload = {
     ...data,
     updated_at: new Date().toISOString(),
@@ -74,8 +74,8 @@ async function updateBudget(userId, id, data) {
   return updatedBudget;
 }
 
-async function deleteBudget(userId, id) {
-  const supabase = getSupabaseClient();
+async function deleteBudget(userId, id, token) {
+  const supabase = getSupabaseClient(token);
   const { data, error } = await supabase
     .from('budgets')
     .delete()
