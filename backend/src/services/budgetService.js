@@ -60,12 +60,14 @@ async function getBudgetsWithSpend(accessToken, period = 'monthly') {
 
   // 2. Fetch expenses for the date range
   const { startDate, endDate } = getDateRangeForPeriod(targetPeriod);
+  const endDateTime = endDate.includes('T') ? endDate : `${endDate}T23:59:59.999Z`;
+
   const { data: txData, error: txErr } = await supabase
     .from('transactions')
     .select('category, amount, type, date')
     .eq('type', 'expense')
     .gte('date', startDate)
-    .lte('date', endDate);
+    .lte('date', endDateTime);
 
   if (txErr) {
     throw new Error(`Failed to fetch expense transactions for spend calculation: ${txErr.message}`);

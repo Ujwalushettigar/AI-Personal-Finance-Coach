@@ -5,6 +5,7 @@ import { budgetApi } from '../../services/api/budget';
 import BudgetOverview from '../../components/budget-goals/BudgetOverview';
 import BudgetCard from '../../components/budget-goals/BudgetCard';
 import BudgetFormModal from '../../components/budget-goals/BudgetFormModal';
+import LogSpendModal from '../../components/budget-goals/LogSpendModal';
 import DeleteConfirmModal from '../../components/budget-goals/DeleteConfirmModal';
 import BudgetSkeleton from '../../components/budget-goals/BudgetSkeleton';
 import SavingsGoalCard from '../../components/budget-goals/SavingsGoalCard';
@@ -37,6 +38,9 @@ export default function BudgetPage() {
   // Budget Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
+
+  const [isLogSpendModalOpen, setIsLogSpendModalOpen] = useState(false);
+  const [logSpendBudget, setLogSpendBudget] = useState(null);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [budgetToDelete, setBudgetToDelete] = useState(null);
@@ -173,10 +177,13 @@ export default function BudgetPage() {
       } else {
         await budgetApi.createBudget(formData);
       }
-      await fetchBudgets();
-      await fetchHealthScore();
+      // Re-fetch both budgets list with spend & summary AND health score for live UI updates
+      await Promise.all([fetchBudgets(), fetchHealthScore()]);
+      setEditingBudget(null);
+      setIsFormModalOpen(false);
     } catch (err) {
       console.error('Failed to save budget:', err);
+      throw err;
     }
   };
 
@@ -412,6 +419,10 @@ export default function BudgetPage() {
                       setIsFormModalOpen(true);
                     }}
                     onDeleteClick={handleDeleteClick}
+                    onLogSpend={(b) => {
+                      setLogSpendBudget(b);
+                      setIsLogSpendModalOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -491,6 +502,19 @@ export default function BudgetPage() {
         }}
         onSubmit={handleSaveBudget}
         initialData={editingBudget}
+      />
+
+      {/* Log Spend Modal */}
+      <LogSpendModal
+        isOpen={isLogSpendModalOpen}
+        onClose={() => {
+          setIsLogSpendModalOpen(false);
+          setLogSpendBudget(null);
+        }}
+        category={logSpendBudget?.category}
+        onSuccess={async () => {
+          await Promise.all([fetchBudgets(), fetchHealthScore()]);
+        }}
       />
 
       {/* Delete Confirmation Modal */}

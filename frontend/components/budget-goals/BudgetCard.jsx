@@ -16,7 +16,7 @@ import { Card, IconTile } from './ThemeCard';
  * - Status conveyed by text labels and icons (never color alone)
  * - 16px radius, #0F1633 background, 1px subtle border, translateY(-2px) hover
  */
-export default function BudgetCard({ budget, onEdit, onDeleteClick }) {
+export default function BudgetCard({ budget, onEdit, onDeleteClick, onLogSpend }) {
   const {
     id,
     category = 'Category',
@@ -147,6 +147,20 @@ export default function BudgetCard({ budget, onEdit, onDeleteClick }) {
 
       {/* Action Buttons: Minimalist & Clean */}
       <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/[0.06] text-xs">
+        {onLogSpend && (
+          <button
+            type="button"
+            onClick={() => onLogSpend(budget)}
+            className="px-3 py-1.5 rounded-[10px] bg-[#39FF14]/[0.10] hover:bg-[#39FF14]/[0.20] text-[#39FF14] border border-[#39FF14]/30 font-semibold transition-all duration-150 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#39FF14]"
+            title="Log spend against this budget"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Log Spend
+          </button>
+        )}
+
         <button
           type="button"
           onClick={() => onEdit(budget)}
