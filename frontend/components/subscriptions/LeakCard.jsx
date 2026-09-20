@@ -5,22 +5,28 @@ import { Card, Tile } from '../budget-goals/ThemeCard';
 
 /**
  * Subscription Leak Alert Card (CryptoVault Fintech Theme)
- * - Severity-colored accent: red (#FF4D6A) for high, amber (#F5A524) for medium
- * - Severity badge pill with text label (never color alone)
- * - Merchant name + monthly cost
- * - Reasons in muted text
- * - Savings callout in a nested green tile
- * - 16px radius, #0F1633 background, subtle border
+ * Reads properties from real subscription / leak API data.
  */
 export default function LeakCard({ leak, money }) {
-  const {
-    merchant = 'Unknown',
-    monthlyCost = 0,
-    potentialMonthlySavings = 0,
-    severity = 'medium',
-    confidence = 0,
-    reasons = []
-  } = leak;
+  const merchant = leak.merchant || 'Subscription';
+  const monthlyCost = Number(leak.monthly_cost ?? leak.monthlyCost ?? leak.amount ?? 0);
+  const potentialMonthlySavings = Number(
+    leak.potential_monthly_savings ?? leak.potentialMonthlySavings ?? monthlyCost
+  );
+  const confidence = Number(leak.confidence ?? 0);
+  const isRarelyUsed = Boolean(leak.rarely_used ?? leak.rarelyUsed);
+
+  const defaultReasons = isRarelyUsed
+    ? ['Flagged as rarely used']
+    : confidence < 60
+    ? ['Low detection confidence']
+    : ['High monthly cost recurring subscription'];
+
+  const reasons = leak.reasons && leak.reasons.length > 0 ? leak.reasons : defaultReasons;
+
+  const severity =
+    leak.severity ||
+    (isRarelyUsed || monthlyCost > 30 || confidence < 60 ? 'high' : 'medium');
 
   const isHigh = severity === 'high';
 
@@ -29,13 +35,13 @@ export default function LeakCard({ leak, money }) {
         label: 'High Priority',
         icon: '⚠️',
         badgeClass: 'bg-[#FF4D6A]/[0.12] text-[#FF4D6A] border-[#FF4D6A]/30',
-        accentBorder: 'border-l-[#FF4D6A]'
+        accentBorder: 'border-l-[#FF4D6A]',
       }
     : {
         label: 'Medium Priority',
         icon: '⚡',
         badgeClass: 'bg-[#F5A524]/[0.12] text-[#F5A524] border-[#F5A524]/30',
-        accentBorder: 'border-l-[#F5A524]'
+        accentBorder: 'border-l-[#F5A524]',
       };
 
   return (
@@ -55,7 +61,7 @@ export default function LeakCard({ leak, money }) {
               </span>
               <span>{severityConfig.label}</span>
             </div>
-            <h3 className="font-bold text-base text-white tracking-tight">
+            <h3 className="font-bold text-base text-white tracking-tight truncate">
               {merchant}
             </h3>
           </div>
@@ -106,4 +112,3 @@ export default function LeakCard({ leak, money }) {
     </Card>
   );
 }
-

@@ -1,4 +1,4 @@
-const { getSupabaseClient } = require('../config/db');
+const { getSupabaseClient, runWithToken } = require('../config/db');
 
 async function verifyAuth(req, res, next) {
   try {
@@ -29,9 +29,10 @@ async function verifyAuth(req, res, next) {
     }
 
     req.user = data.user;
+    req.token = token;
     req.authToken = token;
 
-    return next();
+    return runWithToken(token, () => next());
   } catch (err) {
     console.error('Authentication error:', err);
 

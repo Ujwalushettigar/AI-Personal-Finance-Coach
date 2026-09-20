@@ -5,12 +5,6 @@ import { Card, Tile, BadgePill, IconTile } from '../budget-goals/ThemeCard';
 
 /**
  * Financial Health Score Highlight Panel (CryptoVault Fintech Theme)
- * - Signature "Highlight Panel" pattern from reference design:
- *   - Glowing circular gradient orb in center with score in gradient text and green health shield
- *   - Faint decorative outlined circles at the corners
- *   - Grid of nested --bg-tile (#0B1029) tiles with points in neon green (#39FF14)
- *   - Actionable tips as structured list rows with icon tiles
- * - 100% data-driven, fully responsive, and accessible
  */
 export default function HealthScoreDashboard({
   healthData,
@@ -46,7 +40,24 @@ export default function HealthScoreDashboard({
     );
   }
 
-  if (!healthData) return null;
+  // Treat null / missing data as "Health Score Not Yet Available"
+  if (!healthData) {
+    return (
+      <Card className="p-8 text-center max-w-xl mx-auto border-white/[0.08]">
+        <div className="w-12 h-12 rounded-[12px] bg-[#0A84FF]/[0.12] border border-[#0A84FF]/30 text-[#0A84FF] flex items-center justify-center mx-auto mb-4">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold text-white mb-1.5">
+          Health Score Not Yet Available
+        </h3>
+        <p className="text-xs sm:text-sm text-[#8A93B5] max-w-md mx-auto">
+          Financial Health Score calculation engine will be enabled once background telemetry processing is active.
+        </p>
+      </Card>
+    );
+  }
 
   const {
     score = 0,
@@ -92,19 +103,14 @@ export default function HealthScoreDashboard({
   return (
     <div className="space-y-8 animate-fadeIn">
 
-      {/* ============================================================= */}
-      {/* 1. SIGNATURE HIGHLIGHT PANEL (Center Glowing Orb Pattern)     */}
-      {/* ============================================================= */}
+      {/* 1. SIGNATURE HIGHLIGHT PANEL */}
       <Card hover={false} className="p-8 sm:p-10 relative overflow-hidden">
-
-        {/* Faint decorative outlined circles at corners (from reference design) */}
         <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full border border-white/[0.04] pointer-events-none" />
         <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full border border-white/[0.04] pointer-events-none" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-[#0A84FF]/[0.05] rounded-full blur-[100px] pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
 
-          {/* Left: Heading, Badge, Description */}
           <div className="space-y-4 flex-1 text-center lg:text-left">
             <div className="inline-flex items-center gap-2">
               <BadgePill
@@ -135,10 +141,7 @@ export default function HealthScoreDashboard({
             </div>
           </div>
 
-          {/* Right: Glowing Circular Radial Orb Gauge */}
           <div className="relative flex items-center justify-center flex-shrink-0 w-48 h-48 sm:w-52 sm:h-52">
-
-            {/* Glowing Orb Backdrop with soft green-blue glow */}
             <div className="absolute inset-2 rounded-full bg-gradient-to-br from-[#0A84FF]/20 via-[#1FB5A5]/15 to-[#22D36A]/25 blur-xl pointer-events-none" />
 
             <svg className="w-48 h-48 sm:w-52 sm:h-52 transform -rotate-90">
@@ -150,7 +153,6 @@ export default function HealthScoreDashboard({
                 </linearGradient>
               </defs>
 
-              {/* Background Track */}
               <circle
                 cx="104"
                 cy="104"
@@ -160,7 +162,6 @@ export default function HealthScoreDashboard({
                 fill="transparent"
               />
 
-              {/* Animated Gradient Radial Ring */}
               <circle
                 cx="104"
                 cy="104"
@@ -175,7 +176,6 @@ export default function HealthScoreDashboard({
               />
             </svg>
 
-            {/* Centered Score Badge with Green Shield Icon */}
             <div className="absolute flex flex-col items-center justify-center text-center">
               <div className="w-8 h-8 rounded-full bg-[#39FF14]/[0.15] border border-[#39FF14]/30 flex items-center justify-center text-[#39FF14] mb-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
@@ -194,12 +194,9 @@ export default function HealthScoreDashboard({
         </div>
       </Card>
 
-      {/* ============================================================= */}
-      {/* 2. 4-FACTOR BREAKDOWN GRID (Nested #0B1029 Tile Pattern)      */}
-      {/* ============================================================= */}
+      {/* 2. 4-FACTOR BREAKDOWN GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        {/* Factor 1: Savings Rate */}
         <Tile className="p-6 flex flex-col justify-between hover:border-[#0A84FF]/30 transition-all duration-200">
           <div>
             <div className="flex items-center justify-between text-xs mb-2.5">
@@ -207,7 +204,6 @@ export default function HealthScoreDashboard({
               <span className="text-[11px] text-[#8A93B5]">30% weight</span>
             </div>
             <div className="flex items-baseline justify-between mb-3">
-              {/* Neon Green highlight for factor score */}
               <span className="text-3xl font-bold text-[#39FF14]">
                 {savingsPoints}
               </span>
@@ -227,7 +223,6 @@ export default function HealthScoreDashboard({
           </div>
         </Tile>
 
-        {/* Factor 2: Budget Adherence */}
         <Tile className="p-6 flex flex-col justify-between hover:border-[#0A84FF]/30 transition-all duration-200">
           <div>
             <div className="flex items-center justify-between text-xs mb-2.5">
@@ -254,7 +249,6 @@ export default function HealthScoreDashboard({
           </div>
         </Tile>
 
-        {/* Factor 3: Spending Consistency */}
         <Tile className="p-6 flex flex-col justify-between hover:border-[#0A84FF]/30 transition-all duration-200">
           <div>
             <div className="flex items-center justify-between text-xs mb-2.5">
@@ -281,7 +275,6 @@ export default function HealthScoreDashboard({
           </div>
         </Tile>
 
-        {/* Factor 4: Goal Progress */}
         <Tile className="p-6 flex flex-col justify-between hover:border-[#0A84FF]/30 transition-all duration-200">
           <div>
             <div className="flex items-center justify-between text-xs mb-2.5">
@@ -310,12 +303,9 @@ export default function HealthScoreDashboard({
 
       </div>
 
-      {/* ============================================================= */}
-      {/* 3. DETAILED ACTIONABLE TELEMETRY (Strengths, Warnings, Tips)   */}
-      {/* ============================================================= */}
+      {/* 3. DETAILED ACTIONABLE TELEMETRY */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        {/* STRENGTHS */}
         <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -355,7 +345,6 @@ export default function HealthScoreDashboard({
           </div>
         </Card>
 
-        {/* WARNINGS */}
         <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -396,7 +385,6 @@ export default function HealthScoreDashboard({
           </div>
         </Card>
 
-        {/* ACTIONABLE RECOMMENDATIONS */}
         <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -440,9 +428,7 @@ export default function HealthScoreDashboard({
 
       </div>
 
-      {/* ============================================================= */}
-      {/* 4. WHY THIS SCORE & DETERMINISTIC WEIGHTS FOOTER              */}
-      {/* ============================================================= */}
+      {/* 4. WHY THIS SCORE */}
       <Card hover={false} className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs text-[#8A93B5]">
         <div className="max-w-xl">
           <strong className="text-white font-semibold">Mathematical Transparency:</strong> Calculated deterministically using your monthly savings rate (30%), budget ceiling compliance (30%), spending volatility (20%), and milestone goal progress (20%).
@@ -461,4 +447,3 @@ export default function HealthScoreDashboard({
     </div>
   );
 }
-

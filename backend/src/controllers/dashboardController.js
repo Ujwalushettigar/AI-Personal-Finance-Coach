@@ -1,31 +1,26 @@
-const { getSupabaseClient } = require('../config/db');
-const { detectRecurringExpenses } = require('../services/recurringDetection');
+/**
+ * Dashboard Controller
+ * Connects /api/dashboard endpoint to insightEngine services.
+ */
+
+const { getDashboardSummary: fetchDashboardSummary } = require('../services/insightEngine');
+const { computeHealthScore } = require('../services/healthScoreEngine');
 
 async function getDashboardSummary(req, res) {
   try {
-    const userId = req.user?.id || req.user?.sub;
-    const { data: transactions, error } = await getSupabaseClient(req.authToken)
-      .from('transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
-    if (error) throw error;
-
-    const rows = transactions || [];
-    const totalIncome = rows.filter((row) => row.type === 'income').reduce((sum, row) => sum + Number(row.amount || 0), 0);
-    const totalExpense = rows.filter((row) => row.type === 'expense').reduce((sum, row) => sum + Number(row.amount || 0), 0);
-    const activeSubscriptions = detectRecurringExpenses(rows).filter((item) => item.likelySubscription);
-
-    const summary = {
-      totalIncome: Number(totalIncome.toFixed(2)),
-      totalExpense: Number(totalExpense.toFixed(2)),
-      healthScore: null,
-      recentTransactions: rows.slice(0, 5),
-      activeSubscriptions,
-    };
-    return res.json(summary);
-  } catch (error) {
-    return res.status(500).json({ error: 'Failed to fetch dashboard summary', details: error.message });
+    const token = req.token || req.authToken;
+    const result = await fetchDashboardSummary(token);
+    try {
+      const healthScore = await computeHealthScore(token);
+      result.healthScore = healthScore;
+    } catch (hErr) {
+      console.warn('Failed to compute health score for dashboard summary:', hErr.message);
+      result.healthScore = null;
+    }
+    return res.json(result);
+  } catch (err) {
+    console.error('Error in getDashboardSummary controller:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
 

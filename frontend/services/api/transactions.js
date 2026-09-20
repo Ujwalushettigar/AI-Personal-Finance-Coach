@@ -1,144 +1,118 @@
 /**
  * Transactions API Service Client
  * Member A - AI-Personal-Finance-Coach
- * 
- * Provides client-side methods to interact with /api/transactions REST endpoints.
  */
 
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'}/transactions`;
-  }
-  return 'http://localhost:5000/api/transactions';
-};
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'}/transactions`;
 
-const getAuthHeaders = async () => {
+async function getAuthHeaders() {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.access_token
     ? { Authorization: `Bearer ${session.access_token}` }
     : {};
-};
+}
 
-const handleResponse = async (response) => {
+async function handleResponse(res) {
   let data;
   try {
-    data = await response.json();
+    data = await res.json();
   } catch (err) {
-    throw new Error(`HTTP ${response.status}: Failed to parse server response`);
+    throw new Error(`HTTP ${res.status}: Failed to parse server response`);
   }
 
-  if (!response.ok) {
-    const errorMessage = data?.error || data?.message || `Request failed with status ${response.status}`;
+  if (!res.ok) {
+    const errorMessage = data?.error || data?.message || `Request failed with status ${res.status}`;
     throw new Error(errorMessage);
   }
 
   return data;
-};
+}
 
-/**
- * Fetch all transactions with optional filters
- */
-export const getTransactions = async (filters = {}) => {
-  const baseUrl = getApiBaseUrl();
+export async function getTransactions(filters = {}) {
   const queryParams = new URLSearchParams();
-
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      queryParams.append(key, value);
+  Object.entries(filters).forEach(([key, val]) => {
+    if (val !== undefined && val !== null && val !== '') {
+      queryParams.append(key, val);
     }
   });
-
   const queryString = queryParams.toString();
-  const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  const url = queryString ? `${API_BASE_URL}?${queryString}` : API_BASE_URL;
 
-  const response = await fetch(url, {
+  const res = await fetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       ...(await getAuthHeaders()),
-    }
+    },
   });
 
-  return handleResponse(response);
-};
+  return handleResponse(res);
+}
 
-/**
- * Get transaction by ID
- */
-export const getTransactionById = async (id) => {
-  const baseUrl = getApiBaseUrl();
-  const response = await fetch(`${baseUrl}/${id}`, {
+export async function getTransaction(id) {
+  const res = await fetch(`${API_BASE_URL}/${id}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       ...(await getAuthHeaders()),
-    }
+    },
   });
 
-  return handleResponse(response);
-};
+  return handleResponse(res);
+}
 
-/**
- * Create a new transaction
- */
-export const createTransaction = async (transactionData) => {
-  const baseUrl = getApiBaseUrl();
-  const response = await fetch(baseUrl, {
+export const getTransactionById = getTransaction;
+
+export async function createTransaction(transactionData) {
+  const res = await fetch(API_BASE_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(await getAuthHeaders()),
     },
-    body: JSON.stringify(transactionData)
+    body: JSON.stringify(transactionData),
   });
 
-  return handleResponse(response);
-};
+  return handleResponse(res);
+}
 
-/**
- * Update transaction by ID
- */
-export const updateTransaction = async (id, updateData) => {
-  const baseUrl = getApiBaseUrl();
-  const response = await fetch(`${baseUrl}/${id}`, {
+export async function updateTransaction(id, updateData) {
+  const res = await fetch(`${API_BASE_URL}/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       ...(await getAuthHeaders()),
     },
-    body: JSON.stringify(updateData)
+    body: JSON.stringify(updateData),
   });
 
-  return handleResponse(response);
-};
+  return handleResponse(res);
+}
 
-/**
- * Delete transaction by ID
- */
-export const deleteTransaction = async (id) => {
-  const baseUrl = getApiBaseUrl();
-  const response = await fetch(`${baseUrl}/${id}`, {
+export async function deleteTransaction(id) {
+  const res = await fetch(`${API_BASE_URL}/${id}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
       ...(await getAuthHeaders()),
-    }
+    },
   });
 
-  return handleResponse(response);
-};
+  return handleResponse(res);
+}
 
 export default {
   getTransactions,
+  getTransaction,
   getTransactionById,
   createTransaction,
   updateTransaction,
-  deleteTransaction
+  deleteTransaction,
 };

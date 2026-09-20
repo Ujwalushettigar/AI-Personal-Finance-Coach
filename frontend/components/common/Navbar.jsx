@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { LogOut, Search } from "lucide-react";
@@ -9,7 +10,7 @@ import { LogOut, Search } from "lucide-react";
 /**
  * Navbar (CryptoVault Fintech Theme)
  * - Deep navy backdrop blur (#0A0E27/90) with border-white/10
- * - Brand logo with #39FF14 neon green badge & Space Grotesk typography
+ * - Next.js Image logo + Space Grotesk typography
  * - Center pill navigation with active #39FF14 neon glow state
  * - User pill badge with #161F48 avatar & #FF4D6A hover logout
  * - Preserved 100% of route detection, auth state, and hide-on-login/signup logic
@@ -45,9 +46,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/dashboard" className="font-extrabold text-xl tracking-tight text-white flex items-center gap-2.5">
-          <span className="bg-[#39FF14] text-[#0A0E27] rounded-lg px-2.5 py-1 text-xs font-black shadow-[0_0_16px_rgba(57,255,20,0.4)] tracking-wider">
-            FP
-          </span>
+          <Image src="/logo.svg" width={32} height={32} alt="FinPilot logo" className="rounded-lg shadow-[0_0_12px_rgba(57,255,20,0.3)]" />
           <span className="bg-gradient-to-r from-white via-slate-100 to-[#8A93B5] bg-clip-text text-transparent">
             FinPilot
           </span>
@@ -107,4 +106,3 @@ export default function Navbar() {
     </header>
   );
 }
-

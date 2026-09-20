@@ -1,3 +1,8 @@
+/**
+ * User Model
+ * Member D - AI-Personal-Finance-Coach
+ */
+
 const { getSupabaseClient } = require('../config/db');
 
 async function getUserById(userId) {
@@ -36,7 +41,6 @@ async function updateUserProfile(userId, data) {
   const { data: updatedUser, error } = await supabase
     .from('users')
     .update({
-      email: data.email,
       full_name: data.full_name,
     })
     .eq('id', userId)

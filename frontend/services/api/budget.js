@@ -1,96 +1,242 @@
 /**
  * Frontend Budget & Savings Goals API Service
- * Member C Module: FinPilot
+ * Member C - AI-Personal-Finance-Coach
  */
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
 const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'}/budget`;
 
-/**
- * Generic fetch wrapper with fallback mock handling for standalone development
- */
-async function fetchApi(endpoint, options = {}) {
+async function getAuthHeaders() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : {};
+}
+
+async function handleResponse(res) {
+  let data;
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) throw new Error('Please sign in to manage your budgets.');
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    data = await res.json();
+  } catch (err) {
+    throw new Error(`HTTP ${res.status}: Failed to parse server response`);
+  }
+
+  if (!res.ok) {
+    const errorMessage = data?.error || data?.message || `Request failed with status ${res.status}`;
+    throw new Error(errorMessage);
+  }
+
+  return data;
+}
+
+// --- Budgets with Real Spend & Summary ---
+
+export async function getBudgetsWithSpend(period = 'monthly') {
+  const res = await fetch(`${API_BASE_URL}/with-spend?period=${period}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+  });
+
+  return handleResponse(res);
+}
+
+export async function getBudgetSummary(period = 'monthly') {
+  const res = await fetch(`${API_BASE_URL}/summary?period=${period}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+  });
+
+  return handleResponse(res);
+}
+
+// --- Budgets CRUD ---
+
+export async function getBudgets() {
+  const res = await fetch(API_BASE_URL, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+  });
+
+  return handleResponse(res);
+}
+
+export async function createBudget(data) {
+  const payload = {
+    category: data.category,
+    amount_limit: Number(data.amount_limit ?? data.amountLimit ?? 0),
+    period: data.period || 'monthly',
+  };
+
+  const res = await fetch(API_BASE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse(res);
+}
+
+export async function updateBudget(id, data) {
+  const payload = {
+    category: data.category,
+    amount_limit: Number(data.amount_limit ?? data.amountLimit ?? 0),
+    period: data.period || 'monthly',
+  };
+
+  const res = await fetch(`${API_BASE_URL}/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse(res);
+}
+
+export async function deleteBudget(id) {
+  const res = await fetch(`${API_BASE_URL}/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+  });
+
+  return handleResponse(res);
+}
+
+// --- Savings Goals ---
+
+export async function getSavingsGoals() {
+  const res = await fetch(`${API_BASE_URL}/goals`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+  });
+
+  return handleResponse(res);
+}
+
+export const getGoals = getSavingsGoals;
+
+export async function createSavingsGoal(data) {
+  const res = await fetch(`${API_BASE_URL}/goals`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(res);
+}
+
+export const createGoal = createSavingsGoal;
+
+export async function updateSavingsGoal(id, data) {
+  const res = await fetch(`${API_BASE_URL}/goals/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(res);
+}
+
+export const updateGoal = updateSavingsGoal;
+
+export async function addSavingsProgress(id, addedAmount) {
+  const res = await fetch(`${API_BASE_URL}/goals/${id}/progress`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+    body: JSON.stringify({ addedAmount }),
+  });
+
+  return handleResponse(res);
+}
+
+export async function deleteSavingsGoal(id) {
+  const res = await fetch(`${API_BASE_URL}/goals/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeaders()),
+    },
+  });
+
+  return handleResponse(res);
+}
+
+export const deleteGoal = deleteSavingsGoal;
+
+// --- Financial Health Score ---
+
+export async function getHealthScore() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/health-score`, {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-        ...options.headers
+        ...(await getAuthHeaders()),
       },
-      ...options
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: res.statusText }));
-      throw new Error(errorData.message || 'API Request Failed');
+      return null;
     }
 
     return await res.json();
   } catch (err) {
-    console.warn(`[Budget API Fallback] Error connecting to backend (${endpoint}):`, err.message);
-    throw err;
+    return null;
   }
 }
 
 export const budgetApi = {
-  // --- Budgets ---
-  async getBudgets() {
-    return fetchApi('/budgets');
-  },
-
-  async createBudget(data) {
-    return fetchApi('/budgets', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-  },
-
-  async updateBudget(id, data) {
-    return fetchApi(`/budgets/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
-  },
-
-  async deleteBudget(id) {
-    return fetchApi(`/budgets/${id}`, {
-      method: 'DELETE'
-    });
-  },
-
-  // --- Savings Goals ---
-  async getGoals() {
-    return fetchApi('/budgets/goals');
-  },
-
-  async createGoal(data) {
-    return fetchApi('/budgets/goals', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-  },
-
-  async updateGoal(id, data) {
-    return fetchApi(`/budgets/goals/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
-  },
-
-  async deleteGoal(id) {
-    return fetchApi(`/budgets/goals/${id}`, {
-      method: 'DELETE'
-    });
-  },
-
-  // --- Financial Health Score ---
-  async getHealthScore() {
-    return fetchApi('/budgets/health-score');
-  }
+  getBudgetsWithSpend,
+  getBudgetSummary,
+  getBudgets,
+  createBudget,
+  updateBudget,
+  deleteBudget,
+  getSavingsGoals,
+  getGoals,
+  createSavingsGoal,
+  createGoal,
+  updateSavingsGoal,
+  updateGoal,
+  addSavingsProgress,
+  deleteSavingsGoal,
+  deleteGoal,
+  getHealthScore,
 };
 
 export default budgetApi;

@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { CreditCard, ChevronRight } from "lucide-react";
-import GlassCard from "../common/GlassCard";
 
 /**
  * ActiveSubscriptionsList (CryptoVault Fintech Theme)
@@ -16,7 +15,7 @@ export default function ActiveSubscriptionsList({ subscriptions = [] }) {
   const displayItems = Array.isArray(subscriptions) ? subscriptions : [];
 
   return (
-    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-between space-y-4 text-white">
+    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-start space-y-4 text-white">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-bold text-[#8A93B5] uppercase tracking-wider">
           Active Subscriptions
@@ -50,7 +49,9 @@ export default function ActiveSubscriptionsList({ subscriptions = [] }) {
             const formattedAmount = new Intl.NumberFormat("en-US", {
               style: "currency",
               currency: "USD",
-            }).format(item.amount || 0);
+            }).format(item.amount || item.monthly_cost || item.monthlyCost || 0);
+
+            const merchantName = item.merchant || item.name || "Subscription";
 
             return (
               <div
@@ -59,14 +60,14 @@ export default function ActiveSubscriptionsList({ subscriptions = [] }) {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-[#161F48] text-[#0A84FF] border border-[#0A84FF]/30 flex items-center justify-center font-bold text-xs shadow-sm">
-                    {item.name ? item.name.charAt(0).toUpperCase() : "S"}
+                    {merchantName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div className="font-semibold text-sm text-text-primary">
-                      {item.name || "Subscription"}
+                    <div className="font-semibold text-sm text-white">
+                      {merchantName}
                     </div>
-                    <div className="text-xs text-[#8A93B5]">
-                      {item.billingCycle || "Monthly"} • {item.nextBilling || "Active"}
+                    <div className="text-xs text-[#8A93B5] capitalize">
+                      {item.cadence || item.billingCycle || "Monthly"} • {item.next_expected_payment || item.nextBilling || "Active"}
                     </div>
                   </div>
                 </div>
@@ -75,7 +76,7 @@ export default function ActiveSubscriptionsList({ subscriptions = [] }) {
                   <span className="font-bold text-sm text-white">
                     {formattedAmount}
                   </span>
-                  {item.isLeak && (
+                  {(item.rarely_used || item.isLeak) && (
                     <span className="text-[10px] font-bold bg-[#FF4D6A]/15 text-[#FF4D6A] px-2 py-0.5 rounded-full border border-[#FF4D6A]/30">
                       Unused Leak
                     </span>
@@ -89,4 +90,3 @@ export default function ActiveSubscriptionsList({ subscriptions = [] }) {
     </div>
   );
 }
-

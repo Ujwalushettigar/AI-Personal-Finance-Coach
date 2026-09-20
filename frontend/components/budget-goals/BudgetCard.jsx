@@ -29,34 +29,43 @@ export default function BudgetCard({ budget, onEdit, onDeleteClick }) {
   } = budget;
 
   // Determine status configuration
-  const isOver = status === 'EXCEEDED' || percentageUsed > 100;
-  const isWarning = !isOver && (status === 'WARNING' || status === 'CRITICAL' || percentageUsed >= 70);
-  const isSafe = !isOver && !isWarning;
+  const statusStr = (status || '').toLowerCase();
+  const isExceeded = statusStr === 'exceeded' || percentageUsed > 100;
+  const isCritical = !isExceeded && (statusStr === 'critical' || percentageUsed >= 90);
+  const isWarning = !isExceeded && !isCritical && (statusStr === 'warning' || percentageUsed >= 70);
+  const isSafe = !isExceeded && !isCritical && !isWarning;
 
-  const statusConfig = isOver
+  const statusConfig = isExceeded
     ? {
-      label: 'Over Limit',
+      label: 'Exceeded',
       icon: '⚠️',
       badgeClass: 'bg-[#FF4D6A]/[0.12] text-[#FF4D6A] border-[#FF4D6A]/30',
       barFillClass: 'bg-[#FF4D6A]',
       percentTextClass: 'text-[#FF4D6A]'
     }
-    : isWarning
+    : isCritical
       ? {
-        label: percentageUsed >= 90 ? 'Critical' : 'Warning',
-        icon: '⚡',
-        badgeClass: 'bg-[#F5A524]/[0.12] text-[#F5A524] border-[#F5A524]/30',
-        barFillClass: 'bg-[#F5A524]',
-        percentTextClass: 'text-[#F5A524]'
+        label: 'Critical',
+        icon: '🚨',
+        badgeClass: 'bg-[#FF8C00]/[0.12] text-[#FF8C00] border-[#FF8C00]/30',
+        barFillClass: 'bg-[#FF8C00]',
+        percentTextClass: 'text-[#FF8C00]'
       }
-      : {
-        label: 'Protected',
-        icon: '🛡️',
-        badgeClass: 'bg-[#22D36A]/[0.12] text-[#22D36A] border-[#22D36A]/30',
-        barFillClass: 'bg-gradient-to-r from-[#1FB5A5] to-[#22D36A]',
-        // Neon green used exclusively for safe percentage highlight
-        percentTextClass: 'text-[#39FF14]'
-      };
+      : isWarning
+        ? {
+          label: 'Warning',
+          icon: '⚡',
+          badgeClass: 'bg-[#F5A524]/[0.12] text-[#F5A524] border-[#F5A524]/30',
+          barFillClass: 'bg-[#F5A524]',
+          percentTextClass: 'text-[#F5A524]'
+        }
+        : {
+          label: 'Safe',
+          icon: '🛡️',
+          badgeClass: 'bg-[#22D36A]/[0.12] text-[#22D36A] border-[#22D36A]/30',
+          barFillClass: 'bg-gradient-to-r from-[#1FB5A5] to-[#22D36A]',
+          percentTextClass: 'text-[#39FF14]'
+        };
 
   const clampedProgress = Math.min(100, Math.max(0, percentageUsed));
 
@@ -121,7 +130,7 @@ export default function BudgetCard({ budget, onEdit, onDeleteClick }) {
         {/* Remaining / Over Budget Status */}
         <div className="flex items-center justify-between text-xs text-[#8A93B5] mb-5">
           <span>
-            {isOver ? (
+            {isExceeded ? (
               <span className="text-[#FF4D6A] font-semibold flex items-center gap-1">
                 <span>Exceeded by</span>
                 <span>${(Number(spent) - Number(amountLimit)).toLocaleString()}</span>

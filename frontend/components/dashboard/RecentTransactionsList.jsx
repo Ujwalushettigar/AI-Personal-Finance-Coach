@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowUpRight, ArrowDownLeft, Receipt, ChevronRight } from "lucide-react";
-import GlassCard from "../common/GlassCard";
 
 /**
  * RecentTransactionsList (CryptoVault Fintech Theme)
@@ -16,7 +15,7 @@ export default function RecentTransactionsList({ transactions = [] }) {
   const displayItems = Array.isArray(transactions) ? transactions.slice(0, 5) : [];
 
   return (
-    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-between space-y-4 text-white">
+    <div className="bg-[#0F1633] rounded-2xl p-6 shadow-xl border border-white/10 hover:border-white/20 transition-all duration-300 flex flex-col justify-start space-y-4 text-white">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-bold text-[#8A93B5] uppercase tracking-wider">
           Recent Transactions
@@ -47,12 +46,16 @@ export default function RecentTransactionsList({ transactions = [] }) {
       ) : (
         <div className="space-y-2.5">
           {displayItems.map((item, idx) => {
-            const isIncome = item.type === "income" || item.amount > 0;
+            const isIncome = (item.type || "").toLowerCase() === "income";
             const amountVal = Math.abs(item.amount || 0);
             const formattedAmount = new Intl.NumberFormat("en-US", {
               style: "currency",
               currency: "USD",
             }).format(amountVal);
+
+            const title = item.description || item.merchant || item.title || "Transaction";
+            const category = item.category || "General";
+            const dateStr = item.date || "Today";
 
             return (
               <div
@@ -73,11 +76,11 @@ export default function RecentTransactionsList({ transactions = [] }) {
                     )}
                   </div>
                   <div>
-                    <div className="font-semibold text-sm text-text-primary">
-                      {item.merchant || item.title || "Transaction"}
+                    <div className="font-semibold text-sm text-white">
+                      {title}
                     </div>
                     <div className="text-xs text-[#8A93B5]">
-                      {item.category || "General"} • {item.date || "Today"}
+                      {category} • {dateStr}
                     </div>
                   </div>
                 </div>
@@ -96,4 +99,3 @@ export default function RecentTransactionsList({ transactions = [] }) {
     </div>
   );
 }
-

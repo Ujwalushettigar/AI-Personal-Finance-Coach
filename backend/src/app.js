@@ -24,6 +24,12 @@ app.use('/api/budget', budgetRoutes);
 app.use('/api/coach', coachRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+// Global error-handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: err.message || 'Internal server error' });
+});
+
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== 'test') {

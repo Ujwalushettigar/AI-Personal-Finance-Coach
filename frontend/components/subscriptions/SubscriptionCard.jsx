@@ -5,22 +5,16 @@ import { Card, IconTile } from '../budget-goals/ThemeCard';
 
 /**
  * Subscription Feature Card (CryptoVault Fintech Theme)
- * - Feature card structure: 48x48 icon tile (merchant initial) + name + cadence pill
- * - Confidence bar (8px, rounded, gradient fill based on level)
- * - Monthly cost in white bold, next payment in muted text
- * - Hover lift matching BudgetCard
- * - No business logic changes — purely visual
+ * Reads properties from real subscription API data (supporting both snake_case and camelCase).
  */
 export default function SubscriptionCard({ subscription, money, dateLabel }) {
-  const {
-    merchant = 'Subscription',
-    cadence = 'monthly',
-    amount = 0,
-    monthlyCost = 0,
-    confidence = 0,
-    nextExpectedPayment,
-    transactionCount
-  } = subscription;
+  const merchant = subscription.merchant || 'Subscription';
+  const cadence = subscription.cadence || 'monthly';
+  const amount = Number(subscription.amount ?? subscription.monthly_cost ?? subscription.monthlyCost ?? 0);
+  const monthlyCost = Number(subscription.monthly_cost ?? subscription.monthlyCost ?? amount);
+  const confidence = Number(subscription.confidence ?? 0);
+  const nextExpectedPayment = subscription.next_expected_payment ?? subscription.nextExpectedPayment;
+  const transactionCount = subscription.transaction_count ?? subscription.transactionCount;
 
   // Confidence-based color theming
   const isHigh = confidence >= 80;
@@ -77,7 +71,7 @@ export default function SubscriptionCard({ subscription, money, dateLabel }) {
               / month
             </span>
           </div>
-          {transactionCount && (
+          {transactionCount !== undefined && transactionCount !== null && (
             <span className="text-[11px] text-[#8A93B5]">
               {transactionCount} transactions
             </span>
@@ -95,7 +89,7 @@ export default function SubscriptionCard({ subscription, money, dateLabel }) {
           <div className="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden">
             <div
               className={`h-full ${confidenceBarClass} rounded-full transition-all duration-500 ease-out`}
-              style={{ width: `${Math.min(100, confidence)}%` }}
+              style={{ width: `${Math.min(100, Math.max(0, confidence))}%` }}
               role="progressbar"
               aria-valuenow={confidence}
               aria-valuemin={0}
@@ -118,4 +112,3 @@ export default function SubscriptionCard({ subscription, money, dateLabel }) {
     </Card>
   );
 }
-

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import TransactionForm from '../../components/transactions/TransactionForm';
 import TransactionList from '../../components/transactions/TransactionList';
 import TransactionFilters from '../../components/transactions/TransactionFilters';
-import { BadgePill, Card, Tile } from '../../components/budget-goals/ThemeCard';
+import { BadgePill, Card } from '../../components/budget-goals/ThemeCard';
 import {
   getTransactions,
   createTransaction,
@@ -70,7 +70,8 @@ export default function TransactionsPage() {
 
       try {
         const res = await getTransactions(appliedFilters);
-        setTransactions(res.data || []);
+        const list = Array.isArray(res) ? res : res?.data || [];
+        setTransactions(list);
       } catch (err) {
         setError(
           err.message ||
@@ -138,8 +139,9 @@ export default function TransactionsPage() {
     transactions.forEach((tx) => {
       if (tx.type === 'expense') {
         const val = parseFloat(tx.amount) || 0;
+        const cat = tx.category || 'General';
 
-        counts[tx.category] = (counts[tx.category] || 0) + val;
+        counts[cat] = (counts[cat] || 0) + val;
         totalExpense += val;
       }
     });
@@ -263,23 +265,18 @@ export default function TransactionsPage() {
   };
 
   const formatCurrency = (val) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'USD',
       maximumFractionDigits: 0
     }).format(val || 0);
   };
 
-  /* ═══════════════════════════════════════════════════
-     RENDER — CryptoVault Dark Fintech Theme
-     ═══════════════════════════════════════════════════ */
   return (
     <div className="min-h-screen bg-[#0A0E27] text-white p-4 sm:p-8 pb-20 space-y-8 antialiased">
       <div className="max-w-[1240px] mx-auto space-y-8">
 
-        {/* ═══════════════════════════════════════════════
-            HEADER
-            ═══════════════════════════════════════════════ */}
+        {/* HEADER */}
         <header className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-white/[0.06] pb-6">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-[12px] bg-gradient-to-br from-[#0A84FF] to-[#1FB5A5] flex items-center justify-center shadow-[0_8px_20px_-4px_rgba(10,132,255,0.5)]">
@@ -313,7 +310,7 @@ export default function TransactionsPage() {
                   ? 'bg-[#FF4D6A] shadow-[0_0_8px_#FF4D6A]'
                   : 'bg-[#22D36A] shadow-[0_0_8px_#22D36A]'
                 }`} />
-              {error ? 'API Disconnected' : 'Live Ledger Active'}
+              {error ? 'API Error' : 'Live Ledger Active'}
             </div>
 
             {/* Toggle Form Button */}
@@ -340,9 +337,7 @@ export default function TransactionsPage() {
           </div>
         </header>
 
-        {/* ═══════════════════════════════════════════════
-            TOAST NOTIFICATION
-            ═══════════════════════════════════════════════ */}
+        {/* TOAST NOTIFICATION */}
         {notification && (
           <div className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-[12px] text-white font-semibold text-sm flex items-center gap-2.5 backdrop-blur-md shadow-[0_12px_30px_rgba(0,0,0,0.5)] animate-[fadeIn_0.3s_ease-out] ${notification.type === 'success'
               ? 'bg-[#22D36A]/95'
@@ -353,9 +348,7 @@ export default function TransactionsPage() {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════
-            STATS PANEL — 4-column KPI grid
-            ═══════════════════════════════════════════════ */}
+        {/* STATS PANEL */}
         <div className="bg-[#0F1633] border border-white/[0.06] rounded-[16px] p-6 sm:p-8 hover:border-[#0A84FF]/25 transition-all duration-200">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.06]">
 
@@ -436,9 +429,7 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════
-            ANALYTICS ROW — Spending Breakdown + Weekly Cashflow
-            ═══════════════════════════════════════════════ */}
+        {/* ANALYTICS ROW */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* Spending Breakdown */}
@@ -584,9 +575,7 @@ export default function TransactionsPage() {
           </Card>
         </div>
 
-        {/* ═══════════════════════════════════════════════
-            TRANSACTION FORM
-            ═══════════════════════════════════════════════ */}
+        {/* TRANSACTION FORM */}
         {showForm && (
           <TransactionForm
             onSubmit={handleFormSubmit}
@@ -600,9 +589,7 @@ export default function TransactionsPage() {
           />
         )}
 
-        {/* ═══════════════════════════════════════════════
-            FILTERS
-            ═══════════════════════════════════════════════ */}
+        {/* FILTERS */}
         <TransactionFilters
           filters={filters}
           onFilterChange={setFilters}
@@ -615,9 +602,7 @@ export default function TransactionsPage() {
           }
         />
 
-        {/* ═══════════════════════════════════════════════
-            ERROR STATE
-            ═══════════════════════════════════════════════ */}
+        {/* ERROR STATE */}
         {error && (
           <Card hover={false} className="text-center py-8 px-6">
             <div className="text-3xl mb-3">⚠️</div>
@@ -625,16 +610,14 @@ export default function TransactionsPage() {
             <button
               type="button"
               onClick={() => loadTransactions(filters)}
-              className="px-5 py-2 rounded-[12px] bg-[#FF4D6A]/20 hover:bg-[#FF4D6A]/30 text-white text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#FF4D6A]"
+              className="px-5 py-2 rounded-[12px] bg-[#FF4D6A]/20 hover:bg-[#FF4D6A]/30 text-[#FF4D6A] text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#FF4D6A]"
             >
               Retry Connection
             </button>
           </Card>
         )}
 
-        {/* ═══════════════════════════════════════════════
-            LOADING STATE
-            ═══════════════════════════════════════════════ */}
+        {/* LOADING STATE */}
         {loading && !error && (
           <Card hover={false} className="text-center py-14 px-6">
             <div className="w-9 h-9 rounded-full border-[3px] border-[#0A84FF]/20 border-t-[#0A84FF] mx-auto mb-4 animate-spin" />
@@ -644,9 +627,7 @@ export default function TransactionsPage() {
           </Card>
         )}
 
-        {/* ═══════════════════════════════════════════════
-            EMPTY STATE
-            ═══════════════════════════════════════════════ */}
+        {/* EMPTY STATE */}
         {!loading && !error && transactions.length === 0 && (
           <Card hover={false} className="text-center py-14 px-6 flex flex-col items-center justify-center">
             <div className="text-5xl mb-3.5">💳</div>
@@ -656,7 +637,7 @@ export default function TransactionsPage() {
             <p className="text-sm text-[#8A93B5] max-w-md mx-auto mb-5">
               {filters.search || filters.type || filters.category
                 ? 'No transactions matched your active search filters. Try clearing your filters to view all records.'
-                : 'No transactions recorded yet. Use the record transaction card above to add your first income or expense.'}
+                : 'No transactions recorded yet. Use the record transaction form above to add your first income or expense.'}
             </p>
             {(filters.search || filters.type || filters.category) && (
               <button
@@ -670,9 +651,7 @@ export default function TransactionsPage() {
           </Card>
         )}
 
-        {/* ═══════════════════════════════════════════════
-            TRANSACTION LIST
-            ═══════════════════════════════════════════════ */}
+        {/* TRANSACTION LIST */}
         {!loading && !error && transactions.length > 0 && (
           <div>
             <div className="flex justify-between items-center mb-4 px-1">

@@ -1,72 +1,144 @@
-const BudgetModel = require('../models/Budget');
+/**
+ * Budget & Savings Goals Service
+ * Member C - AI-Personal-Finance-Coach
+ * Computes real category spend from transactions and budget summary metrics.
+ */
 
-class BudgetService {
-  static async getBudgets(userId, token) {
-    const budgets = await BudgetModel.getAllBudgets(userId, token);
-    const totalLimit = Number(budgets.reduce((sum, item) => sum + item.amountLimit, 0).toFixed(2));
-    const totalSpent = Number(budgets.reduce((sum, item) => sum + item.spent, 0).toFixed(2));
-    const overallPercentageUsed = totalLimit ? Number(((totalSpent / totalLimit) * 100).toFixed(1)) : 0;
-    return { summary: { totalLimit, totalSpent, totalRemaining: Math.max(0, Number((totalLimit - totalSpent).toFixed(2))), overallPercentageUsed, overallStatus: overallPercentageUsed > 100 ? 'EXCEEDED' : overallPercentageUsed >= 90 ? 'CRITICAL' : overallPercentageUsed >= 70 ? 'WARNING' : 'NORMAL', categoryCount: budgets.length }, budgets };
+const { getSupabaseClient } = require('../config/db');
+
+/**
+ * Get date range for period (monthly, weekly, yearly)
+ */
+function getDateRangeForPeriod(period = 'monthly') {
+  const now = new Date();
+  const periodLower = (period || 'monthly').toLowerCase();
+
+  let startDate;
+  let endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+  if (periodLower === 'weekly') {
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
+    const monday = new Date(now.setDate(diff));
+    startDate = monday.toISOString().split('T')[0];
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    endDate = sunday.toISOString().split('T')[0];
+  } else if (periodLower === 'yearly') {
+    startDate = `${now.getFullYear()}-01-01`;
+    endDate = `${now.getFullYear()}-12-31`;
+  } else {
+    // monthly default
+    startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   }
 
-  static async getBudgetById(id, userId, token) {
-    const budget = await BudgetModel.getBudgetById(id, userId, token);
-    if (!budget) throw Object.assign(new Error(`Budget with ID '${id}' not found`), { statusCode: 404 });
-    return budget;
-  }
-
-  static async createBudget(data, userId, token) {
-    if (!data.category?.trim()) throw Object.assign(new Error('Category name is required and must be a non-empty string'), { statusCode: 400 });
-    if (!Number.isFinite(Number(data.amountLimit)) || Number(data.amountLimit) <= 0) throw Object.assign(new Error('amountLimit must be a positive number greater than 0'), { statusCode: 400 });
-    return BudgetModel.createBudget(data, userId, token);
-  }
-
-  static async updateBudget(id, data, userId, token) {
-    if (data.amountLimit !== undefined && (!Number.isFinite(Number(data.amountLimit)) || Number(data.amountLimit) <= 0)) throw Object.assign(new Error('amountLimit must be a positive number greater than 0'), { statusCode: 400 });
-    if (data.category !== undefined && !data.category?.trim()) throw Object.assign(new Error('Category name cannot be empty'), { statusCode: 400 });
-    const budget = await BudgetModel.updateBudget(id, data, userId, token);
-    if (!budget) throw Object.assign(new Error(`Budget with ID '${id}' not found`), { statusCode: 404 });
-    return budget;
-  }
-
-  static async deleteBudget(id, userId, token) {
-    if (!await BudgetModel.deleteBudget(id, userId, token)) throw Object.assign(new Error(`Budget with ID '${id}' not found`), { statusCode: 404 });
-    return { success: true, id };
-  }
-
-  static async getGoals(userId, token) {
-    const goals = await BudgetModel.getAllGoals(userId, token);
-    const totalTarget = Number(goals.reduce((sum, item) => sum + item.targetAmount, 0).toFixed(2));
-    const totalSaved = Number(goals.reduce((sum, item) => sum + item.currentAmount, 0).toFixed(2));
-    return { summary: { totalTarget, totalSaved, totalRemaining: Math.max(0, Number((totalTarget - totalSaved).toFixed(2))), overallProgress: totalTarget ? Number(((totalSaved / totalTarget) * 100).toFixed(1)) : 0, goalsCount: goals.length }, goals };
-  }
-
-  static async getGoalById(id, userId, token) {
-    const goal = await BudgetModel.getGoalById(id, userId, token);
-    if (!goal) throw Object.assign(new Error(`Savings Goal with ID '${id}' not found`), { statusCode: 404 });
-    return goal;
-  }
-
-  static async createGoal(data, userId, token) {
-    if (!data.title?.trim()) throw Object.assign(new Error('Goal title is required and cannot be empty'), { statusCode: 400 });
-    if (!Number.isFinite(Number(data.targetAmount)) || Number(data.targetAmount) <= 0) throw Object.assign(new Error('targetAmount must be a positive number greater than 0'), { statusCode: 400 });
-    return BudgetModel.createGoal(data, userId, token);
-  }
-
-  static async updateGoal(id, data, userId, token) {
-    const goal = await BudgetModel.updateGoal(id, data, userId, token);
-    if (!goal) throw Object.assign(new Error(`Savings Goal with ID '${id}' not found`), { statusCode: 404 });
-    return goal;
-  }
-
-  static async deleteGoal(id, userId, token) {
-    if (!await BudgetModel.deleteGoal(id, userId, token)) throw Object.assign(new Error(`Savings Goal with ID '${id}' not found`), { statusCode: 404 });
-    return { success: true, id };
-  }
-
-  static async getFinancialHealthScore(userId, token) {
-    return BudgetModel.getFinancialHealthScore(userId, token);
-  }
+  return { startDate, endDate };
 }
 
-module.exports = BudgetService;
+/**
+ * Fetches all budgets for period with real calculated expense spend per category
+ */
+async function getBudgetsWithSpend(accessToken, period = 'monthly') {
+  const supabase = getSupabaseClient(accessToken);
+  const targetPeriod = (period || 'monthly').toLowerCase();
+
+  // 1. Fetch budgets for the period
+  const { data: budgetsData, error: budgetErr } = await supabase
+    .from('budgets')
+    .select('*')
+    .eq('period', targetPeriod)
+    .order('created_at', { ascending: false });
+
+  if (budgetErr) {
+    throw new Error(`Failed to fetch budgets: ${budgetErr.message}`);
+  }
+
+  const budgets = budgetsData || [];
+  if (budgets.length === 0) {
+    return [];
+  }
+
+  // 2. Fetch expenses for the date range
+  const { startDate, endDate } = getDateRangeForPeriod(targetPeriod);
+  const { data: txData, error: txErr } = await supabase
+    .from('transactions')
+    .select('category, amount, type, date')
+    .eq('type', 'expense')
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  if (txErr) {
+    throw new Error(`Failed to fetch expense transactions for spend calculation: ${txErr.message}`);
+  }
+
+  const expenses = txData || [];
+
+  // Map category to total spent
+  const spendByCategory = {};
+  expenses.forEach((tx) => {
+    const cat = (tx.category || '').trim();
+    const val = Number(tx.amount || 0);
+    spendByCategory[cat] = (spendByCategory[cat] || 0) + val;
+  });
+
+  // 3. Compute budget spend, remaining, utilization, and status
+  return budgets.map((b) => {
+    const amountLimit = Number(b.amount_limit || 0);
+    const categoryName = (b.category || '').trim();
+    const spent = spendByCategory[categoryName] || 0;
+    const remaining = amountLimit - spent;
+    const utilization = amountLimit > 0 ? spent / amountLimit : 0;
+
+    let status = 'safe';
+    if (spent > amountLimit) {
+      status = 'exceeded';
+    } else if (utilization >= 0.9) {
+      status = 'critical';
+    } else if (utilization >= 0.7) {
+      status = 'warning';
+    }
+
+    return {
+      id: b.id,
+      category: b.category,
+      amount_limit: amountLimit,
+      period: b.period,
+      spent: Number(spent.toFixed(2)),
+      remaining: Number(remaining.toFixed(2)),
+      utilization: Number(utilization.toFixed(4)),
+      status,
+      created_at: b.created_at,
+      updated_at: b.updated_at,
+    };
+  });
+}
+
+/**
+ * Returns aggregate budget summary metrics across all budgets
+ */
+async function getBudgetSummary(accessToken, period = 'monthly') {
+  const budgetsWithSpend = await getBudgetsWithSpend(accessToken, period);
+
+  let totalAllocated = 0;
+  let currentOutflow = 0;
+
+  budgetsWithSpend.forEach((b) => {
+    totalAllocated += Number(b.amount_limit || 0);
+    currentOutflow += Number(b.spent || 0);
+  });
+
+  const remainingReserve = totalAllocated - currentOutflow;
+  const capUtilization = totalAllocated > 0 ? currentOutflow / totalAllocated : 0;
+
+  return {
+    totalAllocated: Number(totalAllocated.toFixed(2)),
+    currentOutflow: Number(currentOutflow.toFixed(2)),
+    remainingReserve: Number(remainingReserve.toFixed(2)),
+    capUtilization: Number(capUtilization.toFixed(4)),
+  };
+}
+
+module.exports = {
+  getBudgetsWithSpend,
+  getBudgetSummary,
+};
