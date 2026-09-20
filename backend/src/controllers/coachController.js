@@ -59,8 +59,17 @@ async function askCoach(req, res) {
 
     return res.json({ reply });
   } catch (error) {
-    console.error('Error in coachController.askCoach:', error);
-    return res.status(500).json({ error: 'Failed to process coach request', details: error.message });
+    console.error('Error in coachController.askCoach:', {
+      message: error?.message,
+      responseData: error?.response?.data,
+      stack: error?.stack,
+      rawError: error,
+    });
+    return res.status(500).json({
+      error: 'Failed to process coach request',
+      details: error.message,
+      debug: error.message,
+    });
   }
 }
 

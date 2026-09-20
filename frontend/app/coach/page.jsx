@@ -111,7 +111,7 @@ export default function CoachPage() {
               <h1 className="text-lg font-bold text-white flex items-center gap-2">
                 FinPilot AI Coach
                 <span className="text-[10px] font-extrabold uppercase bg-[#39FF14]/15 text-[#39FF14] border border-[#39FF14]/30 px-2.5 py-0.5 rounded-full tracking-wider">
-                  Gemini 2.0
+                  MISTRAL AI
                 </span>
               </h1>
               <p className="text-xs text-[#8A93B5]">

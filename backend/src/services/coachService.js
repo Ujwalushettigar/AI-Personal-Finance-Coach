@@ -1,41 +1,43 @@
 const { Mistral } = require('@mistralai/mistralai');
 
+/**
+ * AI Financial Coach Service powered by Mistral AI
+ * @param {string} userMessage - User query / prompt
+ * @param {Object} userContext - Financial context data bundle
+ * @returns {Promise<string>} Coach reply message
+ */
 async function askCoach(userMessage, userContext = {}) {
   try {
     const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) {
-      console.warn('MISTRAL_API_KEY environment variable is not set.');
-      return "Mistral API key is not configured. Please add your MISTRAL_API_KEY in backend/.env and restart the server.";
+      console.warn('MISTRAL_API_KEY environment variable is not configured.');
+      return "Mistral API key is not configured. Please add MISTRAL_API_KEY to your backend/.env file.";
     }
 
     const client = new Mistral({ apiKey });
 
-    const prompt = `You are FinPilot's concise personal finance coach.
+    const systemPrompt = `You are a personal finance coach. Answer using ONLY the financial data provided. Be concise and specific with numbers. If data is missing, say so.\n\nUser Financial Context:\n${JSON.stringify(userContext || {}, null, 2)}`;
 
-User financial context:
-${JSON.stringify(userContext)}
-
-Rules:
-- Answer in 2-5 short sentences or at most 3 bullets.
-- Give one clear action the user can take next.
-- Use the supplied numbers when relevant; do not invent account data.
-- If data is missing, state the assumption briefly and give general guidance.
-- No greetings, long explanations, disclaimers, or repeated context.
-
-Question: ${userMessage}`;
-
-    const chatResponse = await client.chat.complete({
-      model: 'mistral-large-latest',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.25,
-      maxTokens: 220,
-      topP: 0.8,
+    const response = await client.chat.complete({
+      model: 'open-mistral-7b',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
     });
 
-    return chatResponse.choices[0].message.content || "I'm having trouble answering right now, please try again.";
+    return (
+      response.choices?.[0]?.message?.content ||
+      "I'm having trouble answering right now, please try again."
+    );
   } catch (error) {
-    console.error('Error calling Mistral API in coachService:', error);
-    return "I'm having trouble answering right now, please try again.";
+    console.error('Full error in coachService askCoach:', {
+      message: error?.message,
+      responseData: error?.response?.data,
+      stack: error?.stack,
+      rawError: error,
+    });
+    return "I'm having trouble analyzing your financial data right now. Please try again later.";
   }
 }
 
