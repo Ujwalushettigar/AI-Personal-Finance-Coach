@@ -12,9 +12,30 @@ const {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  previewImportTransactionsFromCsv,
+  importTransactionsFromCsv,
+  uploadCsvMiddleware,
 } = require('../controllers/transactionController');
 
 router.use(verifyAuth);
+
+router.post('/preview-import', (req, res, next) => {
+  uploadCsvMiddleware(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message || 'CSV file upload error' });
+    }
+    next();
+  });
+}, previewImportTransactionsFromCsv);
+
+router.post('/import', (req, res, next) => {
+  uploadCsvMiddleware(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message || 'CSV file upload error' });
+    }
+    next();
+  });
+}, importTransactionsFromCsv);
 
 router.get('/', listTransactions);
 router.get('/:id', getTransaction);

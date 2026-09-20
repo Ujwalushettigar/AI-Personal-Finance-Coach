@@ -108,6 +108,41 @@ export async function deleteTransaction(id) {
   return handleResponse(res);
 }
 
+export async function previewImportCsv(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const authHeaders = await getAuthHeaders();
+
+  const res = await fetch(`${API_BASE_URL}/preview-import`, {
+    method: 'POST',
+    headers: {
+      ...authHeaders,
+    },
+    body: formData,
+  });
+
+  return handleResponse(res);
+}
+
+export async function importTransactionsCsv(file, mapping = {}) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('mapping', typeof mapping === 'object' ? JSON.stringify(mapping) : mapping);
+
+  const authHeaders = await getAuthHeaders();
+
+  const res = await fetch(`${API_BASE_URL}/import`, {
+    method: 'POST',
+    headers: {
+      ...authHeaders,
+    },
+    body: formData,
+  });
+
+  return handleResponse(res);
+}
+
 export default {
   getTransactions,
   getTransaction,
@@ -115,4 +150,6 @@ export default {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  previewImportCsv,
+  importTransactionsCsv,
 };

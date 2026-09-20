@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import TransactionForm from '../../components/transactions/TransactionForm';
 import TransactionList from '../../components/transactions/TransactionList';
 import TransactionFilters from '../../components/transactions/TransactionFilters';
+import CsvImportModal from '../../components/transactions/CsvImportModal';
 import { BadgePill, Card } from '../../components/budget-goals/ThemeCard';
 import {
   getTransactions,
@@ -20,6 +21,7 @@ export default function TransactionsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showForm, setShowForm] = useState(true);
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
   const [filters, setFilters] = useState({
     search: '',
@@ -312,6 +314,16 @@ export default function TransactionsPage() {
                 }`} />
               {error ? 'API Error' : 'Live Ledger Active'}
             </div>
+
+            {/* Import CSV Button */}
+            <button
+              type="button"
+              onClick={() => setIsCsvModalOpen(true)}
+              className="px-4 py-2.5 rounded-[12px] text-sm font-semibold flex items-center gap-1.5 bg-[#0F1633] border border-white/[0.1] text-white hover:bg-white/[0.08] transition focus:outline-none focus:ring-2 focus:ring-[#0A84FF]"
+            >
+              <span>📥</span>
+              <span>Import CSV</span>
+            </button>
 
             {/* Toggle Form Button */}
             <button
@@ -672,6 +684,13 @@ export default function TransactionsPage() {
         )}
 
       </div>
+
+      {/* CSV IMPORT MODAL */}
+      <CsvImportModal
+        isOpen={isCsvModalOpen}
+        onClose={() => setIsCsvModalOpen(false)}
+        onDone={() => loadTransactions(filters)}
+      />
     </div>
   );
 }
